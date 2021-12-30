@@ -251,9 +251,11 @@ class Drawing(object):
         scale_x = combined_scaled.width / combined.width
         scale_y = combined_scaled.height / combined.height
         combined_scaled_no_offset = combined.scale(scale_x, scale_y)
-        offset_x = combined_scaled.bounds[0] - combined_scaled_no_offset.bounds[0]
-        offset_y = combined_scaled.bounds[1] - combined_scaled_no_offset.bounds[1]
+        offset_x = combined_scaled.bounds[0] - combined_scaled_no_offset.bounds[0] + padding
+        offset_y = combined_scaled.bounds[1] - combined_scaled_no_offset.bounds[1] + padding
+        print(offset_x, offset_y)
         return [d.scale(scale_x, scale_y).translate(offset_x, offset_y) for d in drawings]
+        # return [d.scale(scale_x, scale_y) for d in drawings]
 
     def rotate_and_scale_to_fit(self, width: float, height: float,
                                 padding: float = 0, step=0.01, degrees: bool = False) -> Drawing:
@@ -284,7 +286,8 @@ class Drawing(object):
         return Drawing(paths)
 
     def render(self, scale: float = 109, margin: float = 1, line_width: float = 0.35 / 25.4,
-               bounds: bool = None, show_bounds: bool = True) -> cairo.ImageSurface:
+               bounds: Optional[tuple[float, float, float, float]] = None,
+               show_bounds: bool = True) -> cairo.ImageSurface:
         if cairo is None:
             raise Exception('Drawing.render() requires cairo')
         bounds = bounds or self.bounds
@@ -320,7 +323,7 @@ class Drawing(object):
     @staticmethod
     def render_layers(layers: list[Drawing], colors: list[tuple[float, float, float]], scale: float = 109,
                       margin: float = 1, line_width: float = 0.35 / 25.4,
-                      bounds: Optional[list[float, float, float, float]] = None,
+                      bounds: Optional[tuple[float, float, float, float]] = None,
                       show_bounds: bool = True) -> cairo.ImageSurface:
         assert len(layers) == len(colors)
         if cairo is None:
@@ -365,9 +368,10 @@ class Drawing(object):
 
 
 def test_multilayer():
-    a = Drawing([[(1, 0), (2, 1)]])
-    b = Drawing([[(2, 3), (12, 6)]])
-    a, b = Drawing.multi_scale_to_fit([a, b], 8.5, 11, 0.5)
-    print(a.points, b.points)
-    img = Drawing.render_layers([a, b], [(1, 0, 0), (0, 0, 1)])
+    w, h = 8.5, 11
+    a = Drawing([[(-1, 0), (1, 0)]])
+    b = Drawing([[(0, -1), (0, 1)]])
+    c = Drawing([[(np.cos(theta), np.sin(theta)) for theta in np.linspace(0, 2 * np.pi, 100)]])
+    a, b, c = Drawing.multi_scale_to_fit([a, b, c], w, h, 1)
+    img = Drawing.render_layers([a, b, c], [(1, 0, 0), (0, 0, 1), (0, 1, 0)], bounds=(0, 0, w, h))
     img.write_to_png('test.png')

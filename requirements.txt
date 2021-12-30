@@ -2,3 +2,4 @@ cairocffi
 pyserial
 pyhull
 Shapely
+numpy
