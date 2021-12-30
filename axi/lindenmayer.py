@@ -1,31 +1,33 @@
 import random
 import re
-
 from math import sin, cos, radians
 
 from .drawing import Drawing
 
+
 class LSystem(object):
-    def __init__(self, rules):
+    def __init__(self, rules: dict[str, str]):
         self.rules = rules
         self.pattern = re.compile('|'.join('(%s)' % x for x in rules))
 
-    def step(self, value):
+    def step(self, value: str) -> str:
         def func(match):
             rule = self.rules[match.group(0)]
             if isinstance(rule, str):
                 return rule
             return random.choice(rule)
+
         return self.pattern.sub(func, value)
 
-    def steps(self, value, iterations):
-        for i in range(iterations):
+    def steps(self, value: str, iterations: int) -> str:
+        for _ in range(iterations):
             value = self.step(value)
         return value
 
-    def run(self, start, iterations, angle=None):
+    def run(self, start: str, iterations: int, angle: float, degrees: bool = False) -> Drawing:
         program = self.steps(start, iterations)
-        angle = angle and radians(angle)
+        if degrees:
+            angle = radians(angle)
         state = (0.0, 0.0, 0.0)
         stack = []
         paths = []

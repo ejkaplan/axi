@@ -1,12 +1,15 @@
 from __future__ import division
 
-from .drawing import Drawing
+import itertools
+from string import printable
+
+from .drawing import Drawing, Path
 from .hershey_fonts import *
 
-import itertools
-import string
+HersheyFont = list[tuple[float, float, list[list[tuple[float, float]]]]]
 
-def text(string, font=FUTURAL, spacing=0, extra=0):
+
+def text(string: str, font: HersheyFont = FUTURAL, spacing: float = 0, extra: float = 0) -> list[Path]:
     result = []
     x = 0
     for ch in string:
@@ -24,9 +27,10 @@ def text(string, font=FUTURAL, spacing=0, extra=0):
             x += extra
     return result
 
-def _word_wrap(text, width, measure_func):
+
+def _word_wrap(string: str, width: float, measure_func) -> list[str]:
     result = []
-    for line in text.split('\n'):
+    for line in string.split('\n'):
         fields = itertools.groupby(line, lambda x: x.isspace())
         fields = [''.join(g) for _, g in fields]
         if len(fields) % 2 == 1:
@@ -47,29 +51,35 @@ def _word_wrap(text, width, measure_func):
     result = [x.strip() for x in result]
     return result
 
+
 class Font(object):
-    def __init__(self, font, point_size):
+    def __init__(self, font: HersheyFont, point_size: float):
         self.font = font
-        self.max_height = Drawing(text(string.printable, font)).height
+        self.max_height = Drawing(text(printable, font)).height
         self.scale = (point_size / 72) / self.max_height
-    def text(self, string):
+
+    def text(self, string: str) -> Drawing:
         d = Drawing(text(string, self.font))
         d = d.scale(self.scale)
         return d
-    def justify_text(self, text, width):
-        d = self.text(text)
+
+    def justify_text(self, string: str, width: float) -> Drawing:
+        d = self.text(string)
         w = d.width
-        spaces = text.count(' ')
+        spaces = string.count(' ')
         if spaces == 0 or w >= width:
             return d
         e = ((width - w) / spaces) / self.scale
-        d = Drawing(text(text, self.font, extra=e))
+        d = Drawing(text(string, self.font, extra=e))
         d = d.scale(self.scale)
         return d
-    def measure(self, text):
-        return self.text(text).size
-    def wrap(self, text, width, line_spacing=1, align=0, justify=False):
-        lines = _word_wrap(text, width, self.measure)
+
+    def measure(self, string: str):
+        return self.text(string).size
+
+    def wrap(self, string: str, width: float, line_spacing: float = 1,
+             align: float = 0, justify: bool = False) -> Drawing:
+        lines = _word_wrap(string, width, self.measure)
         ds = [self.text(line) for line in lines]
         max_width = max(d.width for d in ds)
         if justify:

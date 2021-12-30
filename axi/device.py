@@ -1,8 +1,8 @@
 from __future__ import division, print_function
 
 import time
-
 from math import modf
+
 from serial import Serial
 from serial.tools.list_ports import comports
 
@@ -35,11 +35,13 @@ JOG_MAX_VELOCITY = 8
 
 VID_PID = '04D8:FD92'
 
+
 def find_port():
     for port in comports():
         if VID_PID in port[2]:
             return port[0]
     return None
+
 
 class Device(object):
     def __init__(self, **kwargs):
@@ -59,7 +61,7 @@ class Device(object):
         for k, v in kwargs.items():
             setattr(self, k, v)
 
-        self.error = (0, 0) # accumulated step error
+        self.error = (0, 0)  # accumulated step error
 
         port = find_port()
         if port is None:

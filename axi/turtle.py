@@ -2,8 +2,10 @@ import math
 
 from .drawing import Drawing
 
+
 def to_degrees(x):
     return math.degrees(x) % 360
+
 
 class Turtle(object):
     def __init__(self):
@@ -34,6 +36,7 @@ class Turtle(object):
 
     def pd(self):
         self.pen = True
+
     pendown = down = pd
 
     def pu(self):
@@ -41,6 +44,7 @@ class Turtle(object):
         if len(self._path) > 1:
             self._paths.append(self._path)
             self._path = [(self.x, self.y)]
+
     penup = up = pu
 
     def isdown(self):
@@ -53,6 +57,7 @@ class Turtle(object):
             self._path.append((x, y))
         self.x = x
         self.y = y
+
     setpos = setposition = goto
 
     def setx(self, x):
@@ -63,6 +68,7 @@ class Turtle(object):
 
     def seth(self, heading):
         self.h = heading
+
     setheading = seth
 
     def home(self):
@@ -73,20 +79,24 @@ class Turtle(object):
         x = self.x + distance * math.cos(math.radians(self.h))
         y = self.y + distance * math.sin(math.radians(self.h))
         self.goto(x, y)
+
     forward = fd
 
     def bk(self, distance):
         x = self.x - distance * math.cos(math.radians(self.h))
         y = self.y - distance * math.sin(math.radians(self.h))
         self.goto(x, y)
+
     backward = back = bk
 
     def rt(self, angle):
         self.seth(self.h + angle)
+
     right = rt
 
     def lt(self, angle):
         self.seth(self.h - angle)
+
     left = lt
 
     def circle(self, radius, extent=None, steps=None):
@@ -112,6 +122,7 @@ class Turtle(object):
 
     def pos(self):
         return (self.x, self.y)
+
     position = pos
 
     def towards(self, x, y=None):

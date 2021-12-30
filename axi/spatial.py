@@ -1,6 +1,7 @@
 from collections import defaultdict
 from math import hypot
 
+
 class Index(object):
     def __init__(self, points, n=100):
         self.n = n
@@ -42,7 +43,7 @@ class Index(object):
             r += 1
         points.extend(self.ring(i, j, r))
         return min(points,
-            key=lambda p: (hypot(x - p[0], y - p[1]), p[1], p[0]))
+                   key=lambda p: (hypot(x - p[0], y - p[1]), p[1], p[0]))
 
     def ring(self, i, j, r):
         if r == 0:

@@ -1,12 +1,14 @@
 import sys
 import time
 
+
 def pretty_time(seconds):
     seconds = int(round(seconds))
     s = seconds % 60
     m = (seconds / 60) % 60
     h = (seconds / 3600)
     return '%d:%02d:%02d' % (h, m, s)
+
 
 class Bar(object):
 
@@ -85,13 +87,14 @@ class Bar(object):
     def render_bar(self, size=30):
         a = int(round(self.percent_complete / 100.0 * size))
         b = size - a
-        return '[' + '#' * a + '-'  * b + ']'
+        return '[' + '#' * a + '-' * b + ']'
 
     def render_elapsed_time(self):
         return pretty_time(self.elapsed_time)
 
     def render_eta(self):
         return pretty_time(self.eta)
+
 
 if __name__ == '__main__':
     bar = Bar()

@@ -1,10 +1,12 @@
-import axi
 import sys
+
+import axi
 
 '''
 TODO:
 axi (repl)
 '''
+
 
 def main():
     args = sys.argv[1:]
@@ -43,6 +45,7 @@ def main():
         axi.draw(d)
     else:
         pass
+
 
 if __name__ == '__main__':
     main()

@@ -1,15 +1,18 @@
-from __future__ import division
+from __future__ import division, annotations
 
 from math import sin, cos, radians, hypot
+from typing import Optional
 
 from .paths import (
     simplify_paths, sort_paths, join_paths, crop_paths, convex_hull,
-    expand_quadratics, paths_length)
+    expand_quadratics, paths_length, Path, Point)
 
 try:
     import cairocffi as cairo
 except ImportError:
     cairo = None
+
+import numpy as np
 
 V3_SIZE = (12, 8.5)
 V3_BOUNDS = (0, 0, 12, 8.5)
@@ -17,19 +20,28 @@ V3_BOUNDS = (0, 0, 12, 8.5)
 A3_SIZE = (16.93, 11.69)
 A3_BOUNDS = (0, 0, 16.93, 11.69)
 
-class Drawing(object):
-    def __init__(self, paths=None):
-        self.paths = paths or []
-        self.dirty()
 
-    def dirty(self):
+class Drawing(object):
+    def __init__(self, paths: Optional[list[Path]] = None):
+        self.paths = paths or []
         self._bounds = None
         self._length = None
         self._down_length = None
         self._hull = None
 
+    def dirty(self) -> None:
+        self._bounds = None
+        self._length = None
+        self._down_length = None
+        self._hull = None
+
+    @staticmethod
+    def combine(drawings: list[Drawing]) -> Drawing:
+        all_paths = [path for d in drawings for path in d.paths]
+        return Drawing(all_paths)
+
     @classmethod
-    def loads(cls, data):
+    def loads(cls, data: str) -> Drawing:
         paths = []
         for line in data.split('\n'):
             line = line.strip()
@@ -43,21 +55,21 @@ class Drawing(object):
         return cls(paths)
 
     @classmethod
-    def load(cls, filename):
+    def load(cls, filename: str) -> Drawing:
         with open(filename, 'r') as fp:
             return cls.loads(fp.read())
 
-    def dumps(self):
+    def dumps(self) -> str:
         lines = []
         for path in self.paths:
             lines.append(' '.join('%f,%f' % (x, y) for x, y in path))
         return '\n'.join(lines)
 
-    def dump(self, filename):
+    def dump(self, filename: str) -> None:
         with open(filename, 'w') as fp:
             fp.write(self.dumps())
 
-    def dumps_svg(self, scale=96):
+    def dumps_svg(self, scale: float = 96) -> str:
         lines = []
         w = (self.width + 2) * scale
         h = (self.height + 2) * scale
@@ -70,27 +82,28 @@ class Drawing(object):
                 p.append('%s%g %g' % (c, x, y))
                 c = 'L'
             d = ' '.join(p)
-            lines.append('<path d="%s" fill="none" stroke="black" stroke-width="0.01" stroke-linecap="round" stroke-linejoin="round" />' % d)
+            lines.append(
+                '<path d="%s" fill="none" stroke="black" stroke-width="0.01" stroke-linecap="round" stroke-linejoin="round" />' % d)
         lines.append('</g>')
         lines.append('</svg>')
         return '\n'.join(lines)
 
-    def dump_svg(self, filename):
+    def dump_svg(self, filename: str) -> None:
         with open(filename, 'w') as fp:
             fp.write(self.dumps_svg())
 
     @property
-    def points(self):
+    def points(self) -> list[Point]:
         return [(x, y) for path in self.paths for x, y in path]
 
     @property
-    def convex_hull(self):
+    def convex_hull(self) -> Path:
         if self._hull is None:
             self._hull = convex_hull(self.points)
         return self._hull
 
     @property
-    def bounds(self):
+    def bounds(self) -> tuple[float, float, float, float]:
         if self._bounds is None:
             points = self.points
             if points:
@@ -104,7 +117,7 @@ class Drawing(object):
         return self._bounds
 
     @property
-    def length(self):
+    def length(self) -> float:
         if self._length is None:
             length = self.down_length
             for p0, p1 in zip(self.paths, self.paths[1:]):
@@ -115,31 +128,31 @@ class Drawing(object):
         return self._length
 
     @property
-    def up_length(self):
+    def up_length(self) -> float:
         return self.length - self.down_length
 
     @property
-    def down_length(self):
+    def down_length(self) -> float:
         if self._down_length is None:
             self._down_length = paths_length(self.paths)
         return self._down_length
 
     @property
-    def width(self):
+    def width(self) -> float:
         x1, y1, x2, y2 = self.bounds
         return x2 - x1
 
     @property
-    def height(self):
+    def height(self) -> float:
         x1, y1, x2, y2 = self.bounds
         return y2 - y1
 
     @property
-    def size(self):
-        return (self.width, self.height)
+    def size(self) -> tuple[float, float]:
+        return self.width, self.height
 
     @property
-    def all_paths(self):
+    def all_paths(self) -> list[Path]:
         result = []
         position = (0, 0)
         for path in self.paths:
@@ -149,91 +162,115 @@ class Drawing(object):
         result.append([position, (0, 0)])
         return result
 
-    def simplify_paths(self, tolerance):
+    def simplify_paths(self, tolerance: float) -> Drawing:
         return Drawing(simplify_paths(self.paths, tolerance))
 
-    def sort_paths(self, reversable=True):
-        return Drawing(sort_paths(self.paths, reversable))
+    def sort_paths(self, reversible: bool = True) -> Drawing:
+        return Drawing(sort_paths(self.paths, reversible))
 
-    def join_paths(self, tolerance):
+    def join_paths(self, tolerance: float) -> Drawing:
         return Drawing(join_paths(self.paths, tolerance))
 
-    def crop_paths(self, x1, y1, x2, y2):
+    def crop_paths(self, x1: float, y1: float, x2: float, y2: float) -> Drawing:
         return Drawing(crop_paths(self.paths, x1, y1, x2, y2))
 
     # def remove_duplicates(self):
     #     return Drawing(util.remove_duplicates(self.paths))
 
-    def add(self, drawing):
+    def add(self, drawing: Drawing) -> None:
         self.paths.extend(drawing.paths)
         self.dirty()
 
-    def transform(self, func):
+    def transform(self, func) -> Drawing:
         return Drawing([[func(x, y) for x, y in path] for path in self.paths])
 
-    def translate(self, dx, dy):
+    def translate(self, dx: float, dy: float) -> Drawing:
         def func(x, y):
-            return (x + dx, y + dy)
+            return x + dx, y + dy
+
         return self.transform(func)
 
-    def scale(self, sx, sy=None):
+    def scale(self, sx: float, sy: Optional[float] = None) -> Drawing:
         if sy is None:
             sy = sx
+
         def func(x, y):
-            return (x * sx, y * sy)
+            return x * sx, y * sy
+
         return self.transform(func)
 
-    def rotate(self, angle):
-        c = cos(radians(angle))
-        s = sin(radians(angle))
+    def rotate(self, angle: float, degrees: bool = False) -> Drawing:
+        if degrees:
+            angle = radians(angle)
+        c = cos(angle)
+        s = sin(angle)
+
         def func(x, y):
-            return (x * c - y * s, y * c + x * s)
+            return x * c - y * s, y * c + x * s
+
         return self.transform(func)
 
-    def move(self, x, y, ax, ay):
+    def move(self, x: float, y: float, ax: float, ay: float) -> Drawing:
         x1, y1, x2, y2 = self.bounds
         dx = x1 + (x2 - x1) * ax - x
         dy = y1 + (y2 - y1) * ay - y
         return self.translate(-dx, -dy)
 
-    def origin(self):
+    def origin(self) -> Drawing:
         return self.move(0, 0, 0, 0)
 
-    def center(self, width, height):
+    def center(self, width: float, height: float) -> Drawing:
         return self.move(width / 2, height / 2, 0.5, 0.5)
 
-    def rotate_to_fit(self, width, height, step=5):
-        for angle in range(0, 180, step):
+    def rotate_to_fit(self, width: float, height: float,
+                      step: float = 0.05, degrees: bool = False) -> Optional[Drawing]:
+        if degrees:
+            step = radians(step)
+        for angle in np.arange(0, np.pi, step):
             drawing = self.rotate(angle)
             if drawing.width <= width and drawing.height <= height:
                 return drawing.center(width, height)
         return None
 
-    def scale_to_fit_height(self, height, padding=0):
-        return self.scale_to_fit(1e9, height, padding)
+    def scale_to_fit_height(self, height: float, padding: float = 0) -> Drawing:
+        return self.scale_to_fit(float('inf'), height, padding)
 
-    def scale_to_fit_width(self, width, padding=0):
-        return self.scale_to_fit(width, 1e9, padding)
+    def scale_to_fit_width(self, width: float, padding: float = 0) -> Drawing:
+        return self.scale_to_fit(width, float('inf'), padding)
 
-    def scale_to_fit(self, width, height, padding=0):
+    def scale_to_fit(self, width: float, height: float, padding: float = 0) -> Drawing:
         width -= padding * 2
         height -= padding * 2
         scale = min(width / self.width, height / self.height)
         return self.scale(scale, scale).center(width, height)
 
-    def rotate_and_scale_to_fit(self, width, height, padding=0, step=1):
+    @staticmethod
+    def multi_scale_to_fit(drawings: list[Drawing], width: float, height: float, padding: float = 0) -> list[Drawing]:
+        combined = Drawing.combine(drawings)
+        combined_scaled = combined.scale_to_fit(width, height, padding)
+        scale_x = combined_scaled.width / combined.width
+        scale_y = combined_scaled.height / combined.height
+        combined_scaled_no_offset = combined.scale(scale_x, scale_y)
+        offset_x = combined_scaled.bounds[0] - combined_scaled_no_offset.bounds[0]
+        offset_y = combined_scaled.bounds[1] - combined_scaled_no_offset.bounds[1]
+        return [d.scale(scale_x, scale_y).translate(offset_x, offset_y) for d in drawings]
+
+    def rotate_and_scale_to_fit(self, width: float, height: float,
+                                padding: float = 0, step=0.01, degrees: bool = False) -> Drawing:
+        if degrees:
+            step = radians(step)
         values = []
         width -= padding * 2
         height -= padding * 2
         hull = Drawing([self.convex_hull])
-        for angle in range(0, 180, step):
+        for angle in np.arange(0, np.pi, step):
             d = hull.rotate(angle)
             scale = min(width / d.width, height / d.height)
             values.append((scale, angle))
         scale, angle = max(values)
         return self.rotate(angle).scale(scale, scale).center(width, height)
 
-    def remove_paths_outside(self, width, height):
+    def remove_paths_outside(self, width: float, height: float) -> Drawing:
         e = 1e-8
         paths = []
         for path in self.paths:
@@ -246,8 +283,8 @@ class Drawing(object):
                 paths.append(path)
         return Drawing(paths)
 
-    def render(self, scale=109, margin=1, line_width=0.35/25.4,
-            bounds=None, show_bounds=True):
+    def render(self, scale: float = 109, margin: float = 1, line_width: float = 0.35 / 25.4,
+               bounds: bool = None, show_bounds: bool = True) -> cairo.ImageSurface:
         if cairo is None:
             raise Exception('Drawing.render() requires cairo')
         bounds = bounds or self.bounds
@@ -279,3 +316,58 @@ class Drawing(object):
                 dc.line_to(x, y)
         dc.stroke()
         return surface
+
+    @staticmethod
+    def render_layers(layers: list[Drawing], colors: list[tuple[float, float, float]], scale: float = 109,
+                      margin: float = 1, line_width: float = 0.35 / 25.4,
+                      bounds: Optional[list[float, float, float, float]] = None,
+                      show_bounds: bool = True) -> cairo.ImageSurface:
+        assert len(layers) == len(colors)
+        if cairo is None:
+            raise Exception('Drawing.render() requires cairo')
+        if bounds is None:
+            bounds = [float('inf'), float('inf'), float('-inf'), float('-inf')]
+            for d in layers:
+                layer_bounds = d.bounds
+                bounds[0] = min(layer_bounds[0], bounds[0])
+                bounds[1] = min(layer_bounds[1], bounds[1])
+                bounds[2] = max(layer_bounds[2], bounds[2])
+                bounds[3] = max(layer_bounds[3], bounds[3])
+        x1, y1, x2, y2 = bounds
+        w = x2 - x1
+        h = y2 - y1
+        margin *= scale
+        width = int(scale * w + margin * 2)
+        height = int(scale * h + margin * 2)
+        surface = cairo.ImageSurface(cairo.FORMAT_RGB24, width, height)
+        dc = cairo.Context(surface)
+        dc.set_line_cap(cairo.LINE_CAP_ROUND)
+        dc.set_line_join(cairo.LINE_JOIN_ROUND)
+        dc.translate(margin, margin)
+        dc.scale(scale, scale)
+        dc.translate(-x1, -y1)
+        dc.set_source_rgb(1, 1, 1)
+        dc.paint()
+        if show_bounds:
+            dc.set_source_rgb(0.5, 0.5, 0.5)
+            dc.set_line_width(1 / scale)
+            dc.rectangle(x1, y1, w, h)
+            dc.stroke()
+        dc.set_line_width(line_width)
+        for i, layer in enumerate(layers):
+            dc.set_source_rgb(*colors[i])
+            for path in layer.paths:
+                dc.move_to(*path[0])
+                for x, y in path:
+                    dc.line_to(x, y)
+            dc.stroke()
+        return surface
+
+
+def test_multilayer():
+    a = Drawing([[(1, 0), (2, 1)]])
+    b = Drawing([[(2, 3), (12, 6)]])
+    a, b = Drawing.multi_scale_to_fit([a, b], 8.5, 11, 0.5)
+    print(a.points, b.points)
+    img = Drawing.render_layers([a, b], [(1, 0, 0), (0, 0, 1)])
+    img.write_to_png('test.png')
