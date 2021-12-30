@@ -18,7 +18,7 @@ from .paths import (
 )
 from .planner import Planner
 from .turtle import Turtle
-from .util import draw, reset
+from .util import draw, reset, draw_layers
 
 from .drawing import (
     V3_SIZE,
