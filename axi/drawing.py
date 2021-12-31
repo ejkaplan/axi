@@ -321,11 +321,20 @@ class Drawing(object):
         return surface
 
     @staticmethod
-    def render_layers(layers: list[Drawing], colors: list[tuple[float, float, float]], scale: float = 109,
+    def render_layers(layers: list[Drawing], scale: float = 109,
                       margin: float = 1, line_width: float = 0.35 / 25.4,
                       bounds: Optional[tuple[float, float, float, float]] = None,
                       show_bounds: bool = True) -> cairo.ImageSurface:
-        assert len(layers) == len(colors)
+        colors = [
+            (0.09803921568627451, 0.09803921568627451, 0.4392156862745098),  # midnight blue
+            (1.0, 0.0, 0.0),  # red
+            (1.0, 0.8431372549019608, 0.0),  # gold
+            (0.0, 0.39215686274509803, 0.0),  # dark green
+            (0.0, 1.0, 1.0),  # aqua
+            (1.0, 0.0, 1.0),  # fuchsia
+            (0.0, 1.0, 0.0),  # lime
+            (1.0, 0.7137254901960784, 0.7568627450980392),  # lightpink
+        ]
         if cairo is None:
             raise Exception('Drawing.render() requires cairo')
         if bounds is None:
@@ -373,5 +382,5 @@ def test_multilayer():
     b = Drawing([[(0, -1), (0, 1)]])
     c = Drawing([[(np.cos(theta), np.sin(theta)) for theta in np.linspace(0, 2 * np.pi, 100)]])
     a, b, c = Drawing.multi_scale_to_fit([a, b, c], w, h, 1)
-    img = Drawing.render_layers([a, b, c], [(1, 0, 0), (0, 0, 1), (0, 1, 0)], bounds=(0, 0, w, h))
+    img = Drawing.render_layers([a, b, c], bounds=(0, 0, w, h))
     img.write_to_png('test.png')
