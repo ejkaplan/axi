@@ -45,6 +45,8 @@ def simplify_paths(paths: list[Path], tolerance: float) -> list[Path]:
 
 
 def sort_paths(paths: list[Path], reversible: bool = True) -> list[Path]:
+    if len(paths) <= 1:
+        return paths
     first = paths[0]
     paths.remove(first)
     result = [first]
