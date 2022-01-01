@@ -110,7 +110,7 @@ def join_paths(paths: list[Path], tolerance: float) -> list[Path]:
         return paths
     line_index = LineIndex(paths)
     out = []
-    while len(line_index) > 0:
+    while len(line_index) > 1:
         path = line_index.pop(0)
         line_index.reindex()
         while True:
