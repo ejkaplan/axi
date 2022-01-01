@@ -254,7 +254,6 @@ class Drawing(object):
         offset_x = combined_scaled.bounds[0] - combined_scaled_no_offset.bounds[0] + padding
         offset_y = combined_scaled.bounds[1] - combined_scaled_no_offset.bounds[1] + padding
         return [d.scale(scale_x, scale_y).translate(offset_x, offset_y) for d in drawings]
-        # return [d.scale(scale_x, scale_y) for d in drawings]
 
     def rotate_and_scale_to_fit(self, width: float, height: float,
                                 padding: float = 0, step=0.01, degrees: bool = False) -> Drawing:

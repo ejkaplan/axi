@@ -1,5 +1,7 @@
 from math import hypot
+from typing import Optional
 
+import numpy as np
 from pyhull.convex_hull import ConvexHull
 from shapely import geometry
 
@@ -72,19 +74,49 @@ def sort_paths(paths: list[Path], reversible: bool = True) -> list[Path]:
     return result
 
 
+def joinable(path_a: Path, path_b: Path, tolerance: float) -> bool:
+    a_end, b_start = path_a[-1], path_b[0]
+    return np.linalg.norm([a - b for a, b in zip(a_end, b_start)]) < tolerance
+
+
+def join(path_a: Path, path_b: Path, tolerance: float) -> Optional[Path]:
+    rev_a, rev_b = path_a[::-1], path_b[::-1]
+    if joinable(path_a, path_b, tolerance):  # End of A -> Start of B
+        return path_a[:-1] + path_b
+    elif joinable(rev_a, path_b, tolerance):  # Start of A -> Start of B
+        return rev_a[:-1] + path_b
+    elif joinable(path_a, rev_b, tolerance):  # End of A -> End of B
+        return path_a[:-1] + rev_b
+    elif joinable(rev_a, rev_b, tolerance):  # End of A -> End of B
+        return rev_a[:-1] + rev_b
+
+
 def join_paths(paths: list[Path], tolerance: float) -> list[Path]:
+    paths = [path for path in paths if len(path) > 0]
     if len(paths) < 2:
         return paths
-    result = [list(paths[0])]
-    for path in paths[1:]:
-        x1, y1 = result[-1][-1]
-        x2, y2 = path[0]
-        d = hypot(x2 - x1, y2 - y1)
-        if d <= tolerance:
-            result[-1].extend(path)
-        else:
-            result.append(list(path))
-    return result
+    out = []
+    while len(paths) > 0:
+        path = paths.pop()
+        dirty = True
+        while dirty:
+            dirty = False
+            for other in paths:
+                joined = join(path, other, tolerance)
+                if joined is not None:
+                    path = joined
+                    paths.remove(other)
+                    dirty = True
+                    break
+        out.append(path)
+    return out
+
+
+def test_join_paths():
+    paths = [[(0, 0), (1, 1)], [(0, 0.005), (2, 1)]]
+    joined = join_paths(paths, 0.01)
+    print(joined)
+    assert len(joined) == 1
 
 
 def crop_interpolate(x1: float, y1: float,
