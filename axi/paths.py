@@ -3,6 +3,7 @@ from typing import Optional
 
 import numpy as np
 from pyhull.convex_hull import ConvexHull
+from scipy.spatial import KDTree
 from shapely import geometry
 
 from .spatial import Index
@@ -74,40 +75,59 @@ def sort_paths(paths: list[Path], reversible: bool = True) -> list[Path]:
     return result
 
 
-def joinable(path_a: Path, path_b: Path, tolerance: float) -> bool:
-    a_end, b_start = path_a[-1], path_b[0]
-    return np.linalg.norm([a - b for a, b in zip(a_end, b_start)]) < tolerance
+class LineIndex:
 
+    def __init__(self, lines):
+        self.lines = [line for line in lines if len(line) > 0]
+        self.index = None
+        self.r_index = None
+        self.reindex()
 
-def join(path_a: Path, path_b: Path, tolerance: float) -> Optional[Path]:
-    rev_a, rev_b = path_a[::-1], path_b[::-1]
-    if joinable(path_a, path_b, tolerance):  # End of A -> Start of B
-        return path_a[:-1] + path_b
-    elif joinable(rev_a, path_b, tolerance):  # Start of A -> Start of B
-        return rev_a[:-1] + path_b
-    elif joinable(path_a, rev_b, tolerance):  # End of A -> End of B
-        return path_a[:-1] + rev_b
-    elif joinable(rev_a, rev_b, tolerance):  # End of A -> End of B
-        return rev_a[:-1] + rev_b
+    def reindex(self):
+        self.index = KDTree(np.array([line[0] for line in self.lines]))
+        self.r_index = KDTree(np.array([line[-1] for line in self.lines]))
+
+    def find_nearest_within(self, p: Point, tolerance: float) -> tuple[Optional[int], bool]:
+        dist, idx = self.index.query(p, distance_upper_bound=tolerance)
+        if idx < len(self.lines):
+            return idx, False
+        dist, idx = self.r_index.query(p, distance_upper_bound=tolerance)
+        if idx < len(self.lines):
+            return idx, True
+        return None, False
+
+    def pop(self, idx: int) -> Path:
+        out = self.lines.pop(idx)
+        return out
+
+    def __len__(self):
+        return len(self.lines)
 
 
 def join_paths(paths: list[Path], tolerance: float) -> list[Path]:
     paths = [path for path in paths if len(path) > 0]
     if len(paths) < 2:
         return paths
+    line_index = LineIndex(paths)
     out = []
-    while len(paths) > 0:
-        path = paths.pop()
-        dirty = True
-        while dirty:
-            dirty = False
-            for other in paths:
-                joined = join(path, other, tolerance)
-                if joined is not None:
-                    path = joined
-                    paths.remove(other)
-                    dirty = True
+    while len(line_index) > 0:
+        path = line_index.pop(0)
+        line_index.reindex()
+        while True:
+            idx, reverse = line_index.find_nearest_within(path[-1], tolerance)
+            if idx is None:
+                idx, reverse = line_index.find_nearest_within(path[0], tolerance)
+                path = path[::-1]
+                if idx is None:
                     break
+            extension = line_index.pop(idx)
+            if reverse:
+                extension = extension[::-1]
+            path.extend(extension[1:])
+            if len(line_index) >= 1:
+                line_index.reindex()
+            else:
+                break
         out.append(path)
     return out
 
