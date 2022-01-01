@@ -253,7 +253,6 @@ class Drawing(object):
         combined_scaled_no_offset = combined.scale(scale_x, scale_y)
         offset_x = combined_scaled.bounds[0] - combined_scaled_no_offset.bounds[0] + padding
         offset_y = combined_scaled.bounds[1] - combined_scaled_no_offset.bounds[1] + padding
-        print(offset_x, offset_y)
         return [d.scale(scale_x, scale_y).translate(offset_x, offset_y) for d in drawings]
         # return [d.scale(scale_x, scale_y) for d in drawings]
 
