@@ -117,9 +117,9 @@ def join_paths(paths: list[Path], tolerance: float) -> list[Path]:
             idx, reverse = line_index.find_nearest_within(path[-1], tolerance)
             if idx is None:
                 idx, reverse = line_index.find_nearest_within(path[0], tolerance)
-                path = path[::-1]
                 if idx is None:
                     break
+                path = path[::-1]
             extension = line_index.pop(idx)
             if reverse:
                 extension = extension[::-1]
@@ -130,13 +130,6 @@ def join_paths(paths: list[Path], tolerance: float) -> list[Path]:
                 break
         out.append(path)
     return out
-
-
-def test_join_paths():
-    paths = [[(0, 0), (1, 1)], [(0, 0.005), (2, 1)]]
-    joined = join_paths(paths, 0.01)
-    print(joined)
-    assert len(joined) == 1
 
 
 def crop_interpolate(x1: float, y1: float,

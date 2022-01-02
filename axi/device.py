@@ -1,6 +1,7 @@
 from __future__ import division, print_function
 
 import time
+from configparser import ConfigParser
 from math import modf
 
 from serial import Serial
@@ -10,60 +11,39 @@ from .paths import path_length
 from .planner import Planner
 from .progress import Bar
 
-TIMESLICE_MS = 10
 
-MICROSTEPPING_MODE = 1
-STEP_DIVIDER = 2 ** (MICROSTEPPING_MODE - 1)
-
-STEPS_PER_INCH = 2032 / STEP_DIVIDER
-STEPS_PER_MM = 80 / STEP_DIVIDER
-
-PEN_UP_POSITION = 60
-PEN_UP_SPEED = 150
-PEN_UP_DELAY = 0
-
-PEN_DOWN_POSITION = 40
-PEN_DOWN_SPEED = 150
-PEN_DOWN_DELAY = 0
-
-ACCELERATION = 16
-MAX_VELOCITY = 4
-CORNER_FACTOR = 0.001
-
-JOG_ACCELERATION = 16
-JOG_MAX_VELOCITY = 8
-
-VID_PID = '04D8:FD92'
-
-
-def find_port():
+def find_port(vid_pid: str):
     for port in comports():
-        if VID_PID in port[2]:
+        if vid_pid in port[2]:
             return port[0]
     return None
 
 
 class Device(object):
-    def __init__(self, **kwargs):
-        self.steps_per_unit = STEPS_PER_INCH
-        self.pen_up_position = PEN_UP_POSITION
-        self.pen_up_speed = PEN_UP_SPEED
-        self.pen_up_delay = PEN_UP_DELAY
-        self.pen_down_position = PEN_DOWN_POSITION
-        self.pen_down_speed = PEN_DOWN_SPEED
-        self.pen_down_delay = PEN_DOWN_DELAY
-        self.acceleration = ACCELERATION
-        self.max_velocity = MAX_VELOCITY
-        self.corner_factor = CORNER_FACTOR
-        self.jog_acceleration = JOG_ACCELERATION
-        self.jog_max_velocity = JOG_MAX_VELOCITY
-
-        for k, v in kwargs.items():
-            setattr(self, k, v)
+    def __init__(self):
+        config = ConfigParser()
+        config.read('axidraw.ini')
+        self.timeslice_ms = int(config['DEFAULT']['TimesliceMs'])
+        self.microstepping_mode = int(config['DEFAULT']['MicrosteppingMode'])
+        self.step_divider = 2 ** (self.microstepping_mode - 1)
+        self.steps_per_unit = 2032 / self.step_divider
+        self.steps_per_mm = 80 / self.step_divider
+        self.pen_up_position = float(config['DEFAULT']['PenUpPosition'])
+        self.pen_up_speed = float(config['DEFAULT']['PenUpSpeed'])
+        self.pen_up_delay = int(config['DEFAULT']['PenUpDelay'])
+        self.pen_down_position = float(config['DEFAULT']['PenDownPosition'])
+        self.pen_down_speed = float(config['DEFAULT']['PenDownSpeed'])
+        self.pen_down_delay = int(config['DEFAULT']['PenDownDelay'])
+        self.acceleration = float(config['DEFAULT']['Acceleration'])
+        self.max_velocity = float(config['DEFAULT']['MaxVelocity'])
+        self.corner_factor = float(config['DEFAULT']['CornerFactor'])
+        self.jog_acceleration = float(config['DEFAULT']['JogAcceleration'])
+        self.jog_max_velocity = float(config['DEFAULT']['JogMaxVelocity'])
+        self.vid_pid = str(config['DEFAULT']['VID_PID'])
 
         self.error = (0, 0)  # accumulated step error
 
-        port = find_port()
+        port = find_port(self.vid_pid)
         if port is None:
             raise Exception('cannot find axidraw device')
         self.serial = Serial(port, timeout=1)
@@ -121,7 +101,7 @@ class Device(object):
 
     # motor functions
     def enable_motors(self):
-        m = MICROSTEPPING_MODE
+        m = self.microstepping_mode
         return self.command('EM', m, m)
 
     def disable_motors(self):
@@ -151,8 +131,7 @@ class Device(object):
             time.sleep(0.01)
 
     def run_plan(self, plan):
-        step_ms = TIMESLICE_MS
-        step_s = step_ms / 1000
+        step_s = self.timeslice_ms / 1000
         t = 0
         while t < plan.t:
             i1 = plan.instant(t)
@@ -162,7 +141,7 @@ class Device(object):
             ex, sx = modf(d.x * self.steps_per_unit + ex)
             ey, sy = modf(d.y * self.steps_per_unit + ey)
             self.error = ex, ey
-            self.stepper_move(step_ms, int(sx), int(sy))
+            self.stepper_move(self.timeslice_ms, int(sx), int(sy))
             t += step_s
         # self.wait()
 
