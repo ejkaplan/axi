@@ -1,5 +1,6 @@
 from __future__ import division, print_function
 
+import os
 import time
 from configparser import ConfigParser
 from math import modf
@@ -21,8 +22,10 @@ def find_port(vid_pid: str):
 
 class Device(object):
     def __init__(self):
+        here = os.path.dirname(os.path.abspath(__file__))
+        filename = os.path.join(here, 'axidraw.ini')
         config = ConfigParser()
-        config.read('../axidraw.ini')
+        config.read(filename)
         self.timeslice_ms = int(config['DEFAULT']['TimesliceMs'])
         self.microstepping_mode = int(config['DEFAULT']['MicrosteppingMode'])
         self.step_divider = 2 ** (self.microstepping_mode - 1)
