@@ -22,7 +22,7 @@ def find_port(vid_pid: str):
 class Device(object):
     def __init__(self):
         config = ConfigParser()
-        config.read('axidraw.ini')
+        config.read('../axidraw.ini')
         self.timeslice_ms = int(config['DEFAULT']['TimesliceMs'])
         self.microstepping_mode = int(config['DEFAULT']['MicrosteppingMode'])
         self.step_divider = 2 ** (self.microstepping_mode - 1)
