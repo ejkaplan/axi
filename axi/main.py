@@ -67,14 +67,16 @@ def calibrate_height(width: float, height: float, margin: float):
         device.goto(*corner)
         print("Calibrating Pen Up Position")
         while True:
-            new_up = input(f"Input new up position (or nothing to continue). Current={device.pen_up_position}")
+            device.pen_up()
+            new_up = input(f"Input new up position (or nothing to continue). Current={device.pen_up_position} ")
             if len(new_up) == '':
                 break
             device.pen_up_position = int(new_up)
             device.configure()
         print("Calibrating Pen Down Position")
         while True:
-            new_down = input(f"Input new down position (or nothing to continue). Current={device.pen_down_position}")
+            device.pen_down()
+            new_down = input(f"Input new down position (or nothing to continue). Current={device.pen_down_position} ")
             if len(new_down) == '':
                 break
             device.pen_down_position = int(new_down)
