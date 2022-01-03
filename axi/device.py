@@ -14,6 +14,7 @@ from .progress import Bar
 
 
 def find_port(vid_pid: str):
+    vid_pid = vid_pid.upper()
     for port in comports():
         if vid_pid in port[2]:
             return port[0]
