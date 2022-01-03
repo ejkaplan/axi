@@ -73,6 +73,7 @@ def calibrate_height(width: float, height: float, margin: float):
                 break
             device.pen_up_position = int(new_up)
             device.configure()
+        device.pen_up()
         print("Calibrating Pen Down Position")
         while True:
             device.pen_down()
@@ -81,6 +82,8 @@ def calibrate_height(width: float, height: float, margin: float):
                 break
             device.pen_down_position = int(new_down)
             device.configure()
+        device.pen_up()
+    device.home()
     device.write_settings()
 
 
