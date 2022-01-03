@@ -24,6 +24,23 @@ class Device(object):
     def __init__(self):
         here = os.path.dirname(os.path.abspath(__file__))
         filename = os.path.join(here, 'axidraw.ini')
+        if not os.path.exists(filename):
+            with open(filename, 'w') as f:
+                f.write('''[DEFAULT]
+timeslice_ms = 10
+microstepping_mode = 1
+pen_up_position = 60
+pen_up_speed = 150
+pen_up_delay = 0
+pen_down_position=40
+pen_down_speed = 150
+pen_down_delay = 0
+acceleration = 16
+max_velocity = 4
+corner_factor = 0.001
+jog_acceleration = 16
+jog_max_velocity = 8
+vid_pid = 04d8:fd92''')
         config = ConfigParser()
         config.read(filename)
         self.timeslice_ms = int(config['DEFAULT']['timeslice_ms'])
