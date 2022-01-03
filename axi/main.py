@@ -7,45 +7,6 @@ TODO:
 axi (repl)
 '''
 
-
-# def main():
-#     args = sys.argv[1:]
-#     if len(args) == 0:
-#         return
-#     command, args = args[0], args[1:]
-#     command = command.lower()
-#     if command == 'render':
-#         d = axi.Drawing.load(args[0])
-#         d = d.rotate_and_scale_to_fit(12, 8.5, step=90)
-#         path = args[1] if len(args) > 1 else 'out.png'
-#         im = d.render()
-#         im.write_to_png(path)
-#         return
-#     device = axi.Device()
-#     if command == 'zero':
-#         device.zero_position()
-#     elif command == 'home':
-#         device.home()
-#     elif command == 'up':
-#         device.pen_up()
-#     elif command == 'down':
-#         device.pen_down()
-#     elif command == 'on':
-#         device.enable_motors()
-#     elif command == 'off':
-#         device.disable_motors()
-#     elif command == 'move':
-#         dx, dy = map(float, args)
-#         device.move(dx, dy)
-#     elif command == 'goto':
-#         x, y = map(float, args)
-#         device.goto(x, y)
-#     elif command == 'draw':
-#         d = axi.Drawing.load(args[0])
-#         axi.draw(d)
-#     else:
-#         pass
-
 @click.group()
 def main():
     ...
@@ -93,6 +54,32 @@ def move(dx: float, dy: float):
 @click.argument('y', type=float)
 def goto(x: float, y: float):
     axi.Device().goto(x, y)
+
+
+@main.command()
+@click.argument('width', type=float)
+@click.argument('height', type=float)
+@click.argument('margin', type=float)
+def calibrate_height(width: float, height: float, margin: float):
+    device = axi.Device()
+    corners = [(margin, margin), (width-margin, height-margin)]
+    for corner in corners:
+        device.goto(*corner)
+        print("Calibrating Pen Up Position")
+        while True:
+            new_up = input(f"Input new up position (or nothing to continue). Current={device.pen_up_position}")
+            if len(new_up) == '':
+                break
+            device.pen_up_position = int(new_up)
+            device.configure()
+        print("Calibrating Pen Down Position")
+        while True:
+            new_down = input(f"Input new down position (or nothing to continue). Current={device.pen_down_position}")
+            if len(new_down) == '':
+                break
+            device.pen_down_position = int(new_down)
+            device.configure()
+    device.write_settings()
 
 
 if __name__ == '__main__':

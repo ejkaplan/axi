@@ -12,6 +12,22 @@ from .paths import path_length
 from .planner import Planner
 from .progress import Bar
 
+DEFAULT_CONFIGS = '''[DEFAULT]
+timeslice_ms = 10
+microstepping_mode = 1
+pen_up_position = 60
+pen_up_speed = 150
+pen_up_delay = 0
+pen_down_position=40
+pen_down_speed = 150
+pen_down_delay = 0
+acceleration = 16
+max_velocity = 4
+corner_factor = 0.001
+jog_acceleration = 16
+jog_max_velocity = 8
+vid_pid = 04d8:fd92'''
+
 
 def find_port(vid_pid: str):
     vid_pid = vid_pid.upper()
@@ -27,21 +43,7 @@ class Device(object):
         filename = os.path.join(here, 'axidraw.ini')
         if not os.path.exists(filename):
             with open(filename, 'w') as f:
-                f.write('''[DEFAULT]
-timeslice_ms = 10
-microstepping_mode = 1
-pen_up_position = 60
-pen_up_speed = 150
-pen_up_delay = 0
-pen_down_position=40
-pen_down_speed = 150
-pen_down_delay = 0
-acceleration = 16
-max_velocity = 4
-corner_factor = 0.001
-jog_acceleration = 16
-jog_max_velocity = 8
-vid_pid = 04d8:fd92''')
+                f.write(DEFAULT_CONFIGS)
         config = ConfigParser()
         config.read(filename)
         self.timeslice_ms = int(config['DEFAULT']['timeslice_ms'])
@@ -69,6 +71,27 @@ vid_pid = 04d8:fd92''')
             raise Exception('cannot find axidraw device')
         self.serial = Serial(port, timeout=1)
         self.configure()
+
+    def write_settings(self):
+        here = os.path.dirname(os.path.abspath(__file__))
+        filename = os.path.join(here, 'axidraw.ini')
+        config = ConfigParser()
+        config['DEFAULT']['timeslice_ms'] = str(self.timeslice_ms)
+        config['DEFAULT']['microstepping_mode'] = str(self.microstepping_mode)
+        config['DEFAULT']['pen_up_position'] = str(self.pen_up_position)
+        config['DEFAULT']['pen_up_speed'] = str(self.pen_up_speed)
+        config['DEFAULT']['pen_up_delay'] = str(self.pen_up_delay)
+        config['DEFAULT']['pen_down_position'] = str(self.pen_down_position)
+        config['DEFAULT']['pen_down_speed'] = str(self.pen_down_speed)
+        config['DEFAULT']['pen_down_delay'] = str(self.pen_down_delay)
+        config['DEFAULT']['acceleration'] = str(self.acceleration)
+        config['DEFAULT']['max_velocity'] = str(self.max_velocity)
+        config['DEFAULT']['corner_factor'] = str(self.corner_factor)
+        config['DEFAULT']['jog_acceleration'] = str(self.jog_acceleration)
+        config['DEFAULT']['jog_max_velocity'] = str(self.jog_max_velocity)
+        config['DEFAULT']['vid_pid'] = str(self.vid_pid)
+        with open(filename, 'w') as configfile:
+            config.write(configfile)
 
     def configure(self):
         servo_min = 7500
