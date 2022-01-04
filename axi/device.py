@@ -29,25 +29,29 @@ jog_max_velocity = 8
 vid_pid = 04d8:fd92'''
 
 
-def find_port(vid_pid: str):
-    vid_pid = vid_pid.upper()
+def find_port():
+    config = load_config()
+    vid_pid = config['DEFAULT']['vid_pid'].upper()
     for port in comports():
         if vid_pid in port[2]:
             return port[0]
     return None
 
 
+def load_config() -> ConfigParser:
+    here = os.path.dirname(os.path.abspath(__file__))
+    filename = os.path.join(here, 'axidraw.ini')
+    if not os.path.exists(filename):
+        with open(filename, 'w') as f:
+            f.write(DEFAULT_CONFIGS)
+    config = ConfigParser()
+    config.read(filename)
+    return config
+
+
 class Device(object):
     def __init__(self):
-        here = os.path.dirname(os.path.abspath(__file__))
-        filename = os.path.join(here, 'axidraw.ini')
-        if not os.path.exists(filename):
-            with open(filename, 'w') as f:
-                f.write(DEFAULT_CONFIGS)
-        config = ConfigParser()
-        config.read(filename)
-        print("YO")
-        print(list(config['DEFAULT'].items()))
+        config = load_config()
         self.timeslice_ms = int(config['DEFAULT']['timeslice_ms'])
         self.microstepping_mode = int(config['DEFAULT']['microstepping_mode'])
         self.step_divider = 2 ** (self.microstepping_mode - 1)
@@ -68,7 +72,7 @@ class Device(object):
 
         self.error = (0, 0)  # accumulated step error
 
-        port = find_port(self.vid_pid)
+        port = find_port()
         if port is None:
             raise Exception('cannot find axidraw device')
         self.serial = Serial(port, timeout=1)
