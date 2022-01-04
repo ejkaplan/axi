@@ -46,6 +46,8 @@ class Device(object):
                 f.write(DEFAULT_CONFIGS)
         config = ConfigParser()
         config.read(filename)
+        print("YO")
+        print(list(config['DEFAULT'].items()))
         self.timeslice_ms = int(config['DEFAULT']['timeslice_ms'])
         self.microstepping_mode = int(config['DEFAULT']['microstepping_mode'])
         self.step_divider = 2 ** (self.microstepping_mode - 1)

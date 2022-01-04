@@ -7,6 +7,7 @@ setup(
     author='Michael Fogleman',
     author_email='michael.fogleman@gmail.com',
     packages=['axi'],
+    package_data={'axi': ['*.ini']},
     install_requires=['pyserial', 'shapely', 'pyhull', 'cairocffi'],
     entry_points={
         'console_scripts': [
