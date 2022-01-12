@@ -1,8 +1,8 @@
 cairocffi
 pyserial
 pyhull
-Shapely~=1.7.1
-numpy~=1.20.1
+Shapely~=1.8.0
+numpy~=1.22.0
 axi~=0.1
-pillow~=8.2.0
+pillow~=9.0.0
 setuptools~=52.0.0
