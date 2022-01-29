@@ -4,8 +4,16 @@ from math import sin, cos, radians, hypot
 from typing import Optional
 
 from .paths import (
-    simplify_paths, sort_paths, join_paths, crop_paths, convex_hull,
-    expand_quadratics, paths_length, Path, Point)
+    simplify_paths,
+    sort_paths,
+    join_paths,
+    crop_paths,
+    convex_hull,
+    expand_quadratics,
+    paths_length,
+    Path,
+    Point,
+)
 
 try:
     import cairocffi as cairo
@@ -43,12 +51,12 @@ class Drawing(object):
     @classmethod
     def loads(cls, data: str) -> Drawing:
         paths = []
-        for line in data.split('\n'):
+        for line in data.split("\n"):
             line = line.strip()
-            if line.startswith('#'):
+            if line.startswith("#"):
                 continue
             path = line.split()
-            path = [tuple(map(float, x.split(','))) for x in path]
+            path = [tuple(map(float, x.split(","))) for x in path]
             path = expand_quadratics(path)
             if path:
                 paths.append(path)
@@ -56,40 +64,45 @@ class Drawing(object):
 
     @classmethod
     def load(cls, filename: str) -> Drawing:
-        with open(filename, 'r') as fp:
+        with open(filename, "r") as fp:
             return cls.loads(fp.read())
 
     def dumps(self) -> str:
         lines = []
         for path in self.paths:
-            lines.append(' '.join('%f,%f' % (x, y) for x, y in path))
-        return '\n'.join(lines)
+            lines.append(" ".join("%f,%f" % (x, y) for x, y in path))
+        return "\n".join(lines)
 
     def dump(self, filename: str) -> None:
-        with open(filename, 'w') as fp:
+        with open(filename, "w") as fp:
             fp.write(self.dumps())
 
     def dumps_svg(self, scale: float = 96) -> str:
         lines = []
         w = (self.width + 2) * scale
         h = (self.height + 2) * scale
-        lines.append('<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="%g" height="%g">' % (w, h))
+        lines.append(
+            '<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="%g" height="%g">'
+            % (w, h)
+        )
         lines.append('<g transform="scale(%g) translate(1 1)">' % scale)
         for path in self.paths:
             p = []
-            c = 'M'
+            c = "M"
             for x, y in path:
-                p.append('%s%g %g' % (c, x, y))
-                c = 'L'
-            d = ' '.join(p)
+                p.append("%s%g %g" % (c, x, y))
+                c = "L"
+            d = " ".join(p)
             lines.append(
-                '<path d="%s" fill="none" stroke="black" stroke-width="0.01" stroke-linecap="round" stroke-linejoin="round" />' % d)
-        lines.append('</g>')
-        lines.append('</svg>')
-        return '\n'.join(lines)
+                '<path d="%s" fill="none" stroke="black" stroke-width="0.01" stroke-linecap="round" stroke-linejoin="round" />'
+                % d
+            )
+        lines.append("</g>")
+        lines.append("</svg>")
+        return "\n".join(lines)
 
     def dump_svg(self, filename: str) -> None:
-        with open(filename, 'w') as fp:
+        with open(filename, "w") as fp:
             fp.write(self.dumps_svg())
 
     @property
@@ -222,8 +235,9 @@ class Drawing(object):
     def center(self, width: float, height: float) -> Drawing:
         return self.move(width / 2, height / 2, 0.5, 0.5)
 
-    def rotate_to_fit(self, width: float, height: float,
-                      step: float = 0.05, degrees: bool = False) -> Optional[Drawing]:
+    def rotate_to_fit(
+        self, width: float, height: float, step: float = 0.05, degrees: bool = False
+    ) -> Optional[Drawing]:
         if degrees:
             step = radians(step)
         for angle in np.arange(0, np.pi, step):
@@ -233,10 +247,10 @@ class Drawing(object):
         return None
 
     def scale_to_fit_height(self, height: float, padding: float = 0) -> Drawing:
-        return self.scale_to_fit(float('inf'), height, padding)
+        return self.scale_to_fit(float("inf"), height, padding)
 
     def scale_to_fit_width(self, width: float, padding: float = 0) -> Drawing:
-        return self.scale_to_fit(width, float('inf'), padding)
+        return self.scale_to_fit(width, float("inf"), padding)
 
     def scale_to_fit(self, width: float, height: float, padding: float = 0) -> Drawing:
         width -= padding * 2
@@ -245,18 +259,32 @@ class Drawing(object):
         return self.scale(scale, scale).center(width, height)
 
     @staticmethod
-    def multi_scale_to_fit(drawings: list[Drawing], width: float, height: float, padding: float = 0) -> list[Drawing]:
+    def multi_scale_to_fit(
+        drawings: list[Drawing], width: float, height: float, padding: float = 0
+    ) -> list[Drawing]:
         combined = Drawing.combine(drawings)
         combined_scaled = combined.scale_to_fit(width, height, padding)
         scale_x = combined_scaled.width / combined.width
         scale_y = combined_scaled.height / combined.height
         combined_scaled_no_offset = combined.scale(scale_x, scale_y)
-        offset_x = combined_scaled.bounds[0] - combined_scaled_no_offset.bounds[0] + padding
-        offset_y = combined_scaled.bounds[1] - combined_scaled_no_offset.bounds[1] + padding
-        return [d.scale(scale_x, scale_y).translate(offset_x, offset_y) for d in drawings]
+        offset_x = (
+            combined_scaled.bounds[0] - combined_scaled_no_offset.bounds[0] + padding
+        )
+        offset_y = (
+            combined_scaled.bounds[1] - combined_scaled_no_offset.bounds[1] + padding
+        )
+        return [
+            d.scale(scale_x, scale_y).translate(offset_x, offset_y) for d in drawings
+        ]
 
-    def rotate_and_scale_to_fit(self, width: float, height: float,
-                                padding: float = 0, step=0.01, degrees: bool = False) -> Drawing:
+    def rotate_and_scale_to_fit(
+        self,
+        width: float,
+        height: float,
+        padding: float = 0,
+        step=0.01,
+        degrees: bool = False,
+    ) -> Drawing:
         if degrees:
             step = radians(step)
         values = []
@@ -283,11 +311,16 @@ class Drawing(object):
                 paths.append(path)
         return Drawing(paths)
 
-    def render(self, scale: float = 109, margin: float = 1, line_width: float = 0.35 / 25.4,
-               bounds: Optional[tuple[float, float, float, float]] = None,
-               show_bounds: bool = True) -> cairo.ImageSurface:
+    def render(
+        self,
+        scale: float = 109,
+        margin: float = 1,
+        line_width: float = 0.35 / 25.4,
+        bounds: Optional[tuple[float, float, float, float]] = None,
+        show_bounds: bool = True,
+    ) -> cairo.ImageSurface:
         if cairo is None:
-            raise Exception('Drawing.render() requires cairo')
+            raise Exception("Drawing.render() requires cairo")
         bounds = bounds or self.bounds
         x1, y1, x2, y2 = bounds
         w = x2 - x1
@@ -319,12 +352,20 @@ class Drawing(object):
         return surface
 
     @staticmethod
-    def render_layers(layers: list[Drawing], scale: float = 109,
-                      margin: float = 1, line_width: float = 0.35 / 25.4,
-                      bounds: Optional[tuple[float, float, float, float]] = None,
-                      show_bounds: bool = True) -> cairo.ImageSurface:
+    def render_layers(
+        layers: list[Drawing],
+        scale: float = 109,
+        margin: float = 1,
+        line_width: float = 0.35 / 25.4,
+        bounds: Optional[tuple[float, float, float, float]] = None,
+        show_bounds: bool = True,
+    ) -> cairo.ImageSurface:
         colors = [
-            (0.09803921568627451, 0.09803921568627451, 0.4392156862745098),  # midnight blue
+            (
+                0.09803921568627451,
+                0.09803921568627451,
+                0.4392156862745098,
+            ),  # midnight blue
             (1.0, 0.0, 0.0),  # red
             (1.0, 0.8431372549019608, 0.0),  # gold
             (0.0, 0.39215686274509803, 0.0),  # dark green
@@ -334,9 +375,9 @@ class Drawing(object):
             (1.0, 0.7137254901960784, 0.7568627450980392),  # lightpink
         ]
         if cairo is None:
-            raise Exception('Drawing.render() requires cairo')
+            raise Exception("Drawing.render() requires cairo")
         if bounds is None:
-            bounds = [float('inf'), float('inf'), float('-inf'), float('-inf')]
+            bounds = [float("inf"), float("inf"), float("-inf"), float("-inf")]
             for d in layers:
                 layer_bounds = d.bounds
                 bounds[0] = min(layer_bounds[0], bounds[0])
@@ -378,7 +419,9 @@ def test_multilayer():
     w, h = 8.5, 11
     a = Drawing([[(-1, 0), (1, 0)]])
     b = Drawing([[(0, -1), (0, 1)]])
-    c = Drawing([[(np.cos(theta), np.sin(theta)) for theta in np.linspace(0, 2 * np.pi, 100)]])
+    c = Drawing(
+        [[(np.cos(theta), np.sin(theta)) for theta in np.linspace(0, 2 * np.pi, 100)]]
+    )
     a, b, c = Drawing.multi_scale_to_fit([a, b, c], w, h, 1)
     img = Drawing.render_layers([a, b, c], bounds=(0, 0, w, h))
-    img.write_to_png('test.png')
+    img.write_to_png("test.png")

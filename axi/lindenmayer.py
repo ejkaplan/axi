@@ -8,7 +8,7 @@ from .drawing import Drawing
 class LSystem(object):
     def __init__(self, rules: dict[str, str]):
         self.rules = rules
-        self.pattern = re.compile('|'.join('(%s)' % x for x in rules))
+        self.pattern = re.compile("|".join("(%s)" % x for x in rules))
 
     def step(self, value: str) -> str:
         def func(match):
@@ -24,7 +24,9 @@ class LSystem(object):
             value = self.step(value)
         return value
 
-    def run(self, start: str, iterations: int, angle: float, degrees: bool = False) -> Drawing:
+    def run(
+        self, start: str, iterations: int, angle: float, degrees: bool = False
+    ) -> Drawing:
         program = self.steps(start, iterations)
         if degrees:
             angle = radians(angle)
@@ -34,13 +36,13 @@ class LSystem(object):
         point = (0.0, 0.0)
         for instruction in program:
             x, y, a = state
-            if instruction == '-':
+            if instruction == "-":
                 a -= angle
-            elif instruction == '+':
+            elif instruction == "+":
                 a += angle
-            elif instruction == '[':
+            elif instruction == "[":
                 stack.append(state)
-            elif instruction == ']':
+            elif instruction == "]":
                 x, y, a = stack.pop()
                 point = (x, y)
             else:

@@ -14,7 +14,8 @@ class Planner(object):
 
     def plan(self, points):
         return constant_acceleration_plan(
-            points, self.acceleration, self.max_velocity, self.corner_factor)
+            points, self.acceleration, self.max_velocity, self.corner_factor
+        )
 
     def plan_all(self, paths):
         return [self.plan(path) for path in paths]
@@ -63,7 +64,7 @@ class Block(object):
 
 
 # an instant gives position, velocity, etc. at a single point in time
-Instant = namedtuple('Instant', ['t', 'p', 's', 'v', 'a'])
+Instant = namedtuple("Instant", ["t", "p", "s", "v", "a"])
 
 # a = acceleration
 # v = velocity
@@ -79,7 +80,7 @@ Instant = namedtuple('Instant', ['t', 'p', 's', 'v', 'a'])
 
 EPS = 1e-9
 
-_Point = namedtuple('Point', ['x', 'y'])
+_Point = namedtuple("Point", ["x", "y"])
 
 
 class Point(_Point):
@@ -127,8 +128,7 @@ class Point(_Point):
         return p.distance(q)
 
 
-Triangle = namedtuple('Triangle',
-                      ['s1', 's2', 't1', 't2', 'vmax', 'p1', 'p2', 'p3'])
+Triangle = namedtuple("Triangle", ["s1", "s2", "t1", "t2", "vmax", "p1", "p2", "p3"])
 
 
 def triangle(s, vi, vf, a, p1, p3):
@@ -142,8 +142,9 @@ def triangle(s, vi, vf, a, p1, p3):
     return Triangle(s1, s2, t1, t2, vmax, p1, p2, p3)
 
 
-Trapezoid = namedtuple('Trapezoid',
-                       ['s1', 's2', 's3', 't1', 't2', 't3', 'p1', 'p2', 'p3', 'p4'])
+Trapezoid = namedtuple(
+    "Trapezoid", ["s1", "s2", "s3", "t1", "t2", "t3", "p1", "p2", "p3", "p4"]
+)
 
 
 def trapezoid(s, vi, vmax, vf, a, p1, p4):

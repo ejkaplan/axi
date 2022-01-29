@@ -2,10 +2,10 @@ import click
 
 import axi
 
-'''
+"""
 TODO:
 axi (repl)
-'''
+"""
 
 
 @click.group()
@@ -44,23 +44,23 @@ def off():
 
 
 @main.command()
-@click.argument('dx', type=float)
-@click.argument('dy', type=float)
+@click.argument("dx", type=float)
+@click.argument("dy", type=float)
 def move(dx: float, dy: float):
     axi.Device().move(dx, dy)
 
 
 @main.command()
-@click.argument('x', type=float)
-@click.argument('y', type=float)
+@click.argument("x", type=float)
+@click.argument("y", type=float)
 def goto(x: float, y: float):
     axi.Device().goto(x, y)
 
 
 @main.command()
-@click.argument('width', type=float)
-@click.argument('height', type=float)
-@click.argument('margin', type=float)
+@click.argument("width", type=float)
+@click.argument("height", type=float)
+@click.argument("margin", type=float)
 def calibrate_height(width: float, height: float, margin: float):
     device = axi.Device()
     corners = [(margin, margin), (width - margin, height - margin)]
@@ -69,7 +69,9 @@ def calibrate_height(width: float, height: float, margin: float):
         print("Calibrating Pen Up Position")
         while True:
             device.pen_up()
-            new_up = input(f"Input new up position (or nothing to continue). Current={device.pen_up_position} ")
+            new_up = input(
+                f"Input new up position (or nothing to continue). Current={device.pen_up_position} "
+            )
             if len(new_up) == 0:
                 break
             device.pen_up_position = int(new_up)
@@ -78,7 +80,9 @@ def calibrate_height(width: float, height: float, margin: float):
         print("Calibrating Pen Down Position")
         while True:
             device.pen_down()
-            new_down = input(f"Input new down position (or nothing to continue). Current={device.pen_down_position} ")
+            new_down = input(
+                f"Input new down position (or nothing to continue). Current={device.pen_down_position} "
+            )
             if len(new_down) == 0:
                 break
             device.pen_down_position = int(new_down)
@@ -89,9 +93,9 @@ def calibrate_height(width: float, height: float, margin: float):
 
 
 @main.command()
-@click.argument('width', type=float)
-@click.argument('height', type=float)
-@click.argument('margin', type=float)
+@click.argument("width", type=float)
+@click.argument("height", type=float)
+@click.argument("margin", type=float)
 def calibrate_speed(width: float, height: float, margin: float):
     device = axi.Device()
     y = margin
@@ -102,7 +106,9 @@ def calibrate_speed(width: float, height: float, margin: float):
         device.pen_down()
         device.goto(width - margin, y, jog=False)
         device.pen_up()
-        new_speed = input(f"Input new speed (or nothing to finish). Current={device.max_velocity} ")
+        new_speed = input(
+            f"Input new speed (or nothing to finish). Current={device.max_velocity} "
+        )
         if len(new_speed) == 0:
             break
         device.max_velocity = float(new_speed)
@@ -112,5 +118,5 @@ def calibrate_speed(width: float, height: float, margin: float):
     device.write_settings()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

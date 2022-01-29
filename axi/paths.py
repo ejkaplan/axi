@@ -16,10 +16,10 @@ def load_paths(filename: str) -> list[Path]:
     paths = []
     with open(filename) as fp:
         for line in fp:
-            points = filter(None, line.strip().split(';'))
+            points = filter(None, line.strip().split(";"))
             if not points:
                 continue
-            path = [tuple(map(float, x.split(','))) for x in points]
+            path = [tuple(map(float, x.split(","))) for x in points]
             paths.append(path)
     return paths
 
@@ -76,7 +76,6 @@ def sort_paths(paths: list[Path], reversible: bool = True) -> list[Path]:
 
 
 class LineIndex:
-
     def __init__(self, lines):
         self.lines = [line for line in lines if len(line) > 0]
         self.index = None
@@ -87,7 +86,9 @@ class LineIndex:
         self.index = KDTree(np.array([line[0] for line in self.lines]))
         self.r_index = KDTree(np.array([line[-1] for line in self.lines]))
 
-    def find_nearest_within(self, p: Point, tolerance: float) -> tuple[Optional[int], bool]:
+    def find_nearest_within(
+        self, p: Point, tolerance: float
+    ) -> tuple[Optional[int], bool]:
         dist, idx = self.index.query(p, distance_upper_bound=tolerance)
         if idx < len(self.lines):
             return idx, False
@@ -132,10 +133,16 @@ def join_paths(paths: list[Path], tolerance: float) -> list[Path]:
     return out
 
 
-def crop_interpolate(x1: float, y1: float,
-                     x2: float, y2: float,
-                     ax: float, ay: float,
-                     bx: float, by: float) -> tuple[float, float]:
+def crop_interpolate(
+    x1: float,
+    y1: float,
+    x2: float,
+    y2: float,
+    ax: float,
+    ay: float,
+    bx: float,
+    by: float,
+) -> tuple[float, float]:
     dx = bx - ax
     dy = by - ay
     t1 = (x1 - ax) / dx if dx else -1
@@ -178,7 +185,9 @@ def crop_path(path: Path, x1: float, y1: float, x2: float, y2: float) -> Path:
     return result
 
 
-def crop_paths(paths: list[Path], x1: float, y1: float, x2: float, y2: float) -> list[Path]:
+def crop_paths(
+    paths: list[Path], x1: float, y1: float, x2: float, y2: float
+) -> list[Path]:
     return [crop_path(path, x1, y1, x2, y2) for path in paths]
 
 
@@ -188,7 +197,9 @@ def convex_hull(points: list[Point]) -> list[Point]:
     return [hull.points[i] for i in vertices]
 
 
-def quadratic_path(x0: float, y0: float, x1: float, y1: float, x2: float, y2: float) -> Path:
+def quadratic_path(
+    x0: float, y0: float, x1: float, y1: float, x2: float, y2: float
+) -> Path:
     n = int(hypot(x1 - x0, y1 - y0) + hypot(x2 - x1, y2 - y1))
     n = max(n, 4)
     points = []
@@ -218,7 +229,7 @@ def expand_quadratics(path):
             result.extend(quadratic_path(x0, y0, x1, y1, x2, y2))
             previous = (x2, y2)
         else:
-            raise Exception('invalid point: %r' % point)
+            raise Exception("invalid point: %r" % point)
     return result
 
 
@@ -232,9 +243,15 @@ def shapely_to_paths(g) -> list[Path]:
         return []
     elif isinstance(g, geometry.LineString):
         return [list(g.coords)]
-    elif isinstance(g, (
-            geometry.MultiPoint, geometry.MultiLineString, geometry.MultiPolygon,
-            geometry.collection.GeometryCollection)):
+    elif isinstance(
+        g,
+        (
+            geometry.MultiPoint,
+            geometry.MultiLineString,
+            geometry.MultiPolygon,
+            geometry.collection.GeometryCollection,
+        ),
+    ):
         paths = []
         for x in g:
             paths.extend(shapely_to_paths(x))
@@ -245,4 +262,4 @@ def shapely_to_paths(g) -> list[Path]:
             paths.extend(shapely_to_paths(interior))
         return paths
     else:
-        raise Exception('unhandled shapely geometry: %s' % type(g))
+        raise Exception("unhandled shapely geometry: %s" % type(g))
