@@ -21,6 +21,8 @@ except ImportError:
     cairo = None
 
 import numpy as np
+from shapely.geometry import MultiLineString, Polygon
+from shapely.ops import split
 
 V3_SIZE = (12, 8.5)
 V3_BOUNDS = (0, 0, 12, 8.5)
@@ -105,6 +107,13 @@ class Drawing(object):
         with open(filename, "w") as fp:
             fp.write(self.dumps_svg())
 
+    def to_shapely(self) -> MultiLineString:
+        return MultiLineString(self.paths)
+
+    @staticmethod
+    def from_shapely(shape: MultiLineString) -> Drawing:
+        return Drawing([list(line.coords) for line in shape.geoms])
+
     @property
     def points(self) -> list[Point]:
         return [(x, y) for path in self.paths for x, y in path]
@@ -184,11 +193,15 @@ class Drawing(object):
     def join_paths(self, tolerance: float) -> Drawing:
         return Drawing(join_paths(self.paths, tolerance))
 
-    def crop_paths(self, x1: float, y1: float, x2: float, y2: float) -> Drawing:
-        return Drawing(crop_paths(self.paths, x1, y1, x2, y2))
+    def crop_to_rectangle(self, x1: float, y1: float, x2: float, y2: float) -> Drawing:
+        boundary = Polygon([(x1, y1), (x2, y1), (x2, y2), (x1, y2)])
+        return self.crop_to_boundary(boundary)
 
-    # def remove_duplicates(self):
-    #     return Drawing(util.remove_duplicates(self.paths))
+    def crop_to_boundary(self, boundary: Polygon) -> Drawing:
+        multiline = self.to_shapely()
+        splits = split(multiline, boundary)
+        lines = [line for line in splits.geoms if boundary.contains(line)]
+        return Drawing([list(line.coords) for line in lines])
 
     def add(self, drawing: Drawing) -> None:
         self.paths.extend(drawing.paths)
