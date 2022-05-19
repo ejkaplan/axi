@@ -7,7 +7,6 @@ from .paths import (
     simplify_paths,
     sort_paths,
     join_paths,
-    crop_paths,
     convex_hull,
     expand_quadratics,
     paths_length,
