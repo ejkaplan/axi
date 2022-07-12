@@ -323,6 +323,17 @@ class Drawing(object):
                 paths.append(path)
         return Drawing(paths)
 
+    def repeat(self, n: int = 2) -> Drawing:
+        paths = []
+        for path in self.paths:
+            tmp = path
+            new_path = path
+            for _ in range(n - 1):
+                tmp = tmp[::-1]
+                new_path += tmp[1:]
+            paths.append(new_path)
+        return Drawing(paths)
+
     def render(
         self,
         scale: float = 109,
@@ -374,17 +385,17 @@ class Drawing(object):
     ) -> cairo.ImageSurface:
         colors = [
             (
-                0.09803921568627451,
-                0.09803921568627451,
-                0.4392156862745098,
+                0.098,
+                0.098,
+                0.439,
             ),  # midnight blue
             (1.0, 0.0, 0.0),  # red
-            (1.0, 0.8431372549019608, 0.0),  # gold
-            (0.0, 0.39215686274509803, 0.0),  # dark green
+            (1.0, 0.843, 0.0),  # gold
+            (0.0, 0.392, 0.0),  # dark green
             (0.0, 1.0, 1.0),  # aqua
             (1.0, 0.0, 1.0),  # fuchsia
             (0.0, 1.0, 0.0),  # lime
-            (1.0, 0.7137254901960784, 0.7568627450980392),  # lightpink
+            (1.0, 0.714, 0.757),  # lightpink
         ]
         if cairo is None:
             raise Exception("Drawing.render() requires cairo")

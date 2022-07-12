@@ -253,7 +253,7 @@ def shapely_to_paths(g) -> list[Path]:
         ),
     ):
         paths = []
-        for x in g:
+        for x in g.geoms:
             paths.extend(shapely_to_paths(x))
         return paths
     elif isinstance(g, geometry.Polygon):
