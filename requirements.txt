@@ -6,3 +6,6 @@ numpy~=1.22.0
 axi~=0.1
 pillow~=9.0.0
 setuptools~=52.0.0
+click~=8.0.3
+scipy~=1.7.3
+pytest~=6.2.4
