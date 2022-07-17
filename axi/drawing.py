@@ -436,15 +436,3 @@ class Drawing(object):
                     dc.line_to(x, y)
             dc.stroke()
         return surface
-
-
-def test_multilayer():
-    w, h = 8.5, 11
-    a = Drawing([[(-1, 0), (1, 0)]])
-    b = Drawing([[(0, -1), (0, 1)]])
-    c = Drawing(
-        [[(np.cos(theta), np.sin(theta)) for theta in np.linspace(0, 2 * np.pi, 100)]]
-    )
-    a, b, c = Drawing.multi_scale_to_fit([a, b, c], w, h, 1)
-    img = Drawing.render_layers([a, b, c], bounds=(0, 0, w, h))
-    img.write_to_png("test.png")
