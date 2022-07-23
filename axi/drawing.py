@@ -224,7 +224,10 @@ class Drawing(object):
 
         return self.transform(func)
 
-    def rotate(self, angle: float, degrees: bool = False) -> Drawing:
+    def rotate(
+        self, angle: float, anchor: tuple[float, float] = (0, 0), degrees: bool = False
+    ) -> Drawing:
+        d = self.translate(-anchor[0], -anchor[1])
         if degrees:
             angle = radians(angle)
         c = cos(angle)
@@ -233,7 +236,9 @@ class Drawing(object):
         def func(x, y):
             return x * c - y * s, y * c + x * s
 
-        return self.transform(func)
+        d = d.transform(func)
+        d = d.translate(anchor[0], anchor[1])
+        return d
 
     def move(self, x: float, y: float, ax: float, ay: float) -> Drawing:
         x1, y1, x2, y2 = self.bounds
