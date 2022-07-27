@@ -38,6 +38,9 @@ class Drawing(object):
         self._down_length = None
         self._hull = None
 
+    def __eq__(self, other: Drawing):
+        assert self.paths == other.paths
+
     def dirty(self) -> None:
         self._bounds = None
         self._length = None
