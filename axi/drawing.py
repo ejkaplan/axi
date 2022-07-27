@@ -1,5 +1,6 @@
 from __future__ import division, annotations
 
+from dataclasses import dataclass
 from math import sin, cos, radians, hypot
 from typing import Optional
 
@@ -30,6 +31,7 @@ A3_SIZE = (16.93, 11.69)
 A3_BOUNDS = (0, 0, 16.93, 11.69)
 
 
+@dataclass
 class Drawing(object):
     def __init__(self, paths: Optional[list[Path]] = None):
         self.paths = paths or []
@@ -40,6 +42,9 @@ class Drawing(object):
 
     def __eq__(self, other: Drawing):
         return self.paths == other.paths
+
+    def __hash__(self):
+        return hash(tuple(self.paths))
 
     def dirty(self) -> None:
         self._bounds = None
