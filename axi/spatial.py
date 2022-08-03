@@ -1,5 +1,7 @@
 from collections import defaultdict
-from math import hypot
+from math import hypot, nan
+
+import numpy as np
 
 
 class Index(object):
@@ -15,14 +17,8 @@ class Index(object):
             self.insert(point)
 
     def normalize(self, x, y):
-        try:
-            px = (x - self.x1) / (self.x2 - self.x1)
-        except ZeroDivisionError:
-            px = 0
-        try:
-            py = (y - self.y1) / (self.y2 - self.y1)
-        except ZeroDivisionError:
-            py = 0
+        px = 0 if self.x2 == self.x1 else (x - self.x1) / (self.x2 - self.x1)
+        py = 0 if self.y2 == self.y1 else (y - self.y1) / (self.y2 - self.y1)
         i = int(px * self.n)
         j = int(py * self.n)
         return i, j

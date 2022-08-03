@@ -1,5 +1,6 @@
 from __future__ import division, annotations
 
+from copy import deepcopy
 from dataclasses import dataclass
 from math import sin, cos, radians, hypot
 from typing import Optional
@@ -45,6 +46,9 @@ class Drawing(object):
 
     def __hash__(self):
         return hash(tuple(self.paths))
+
+    def copy(self) -> Drawing:
+        return Drawing(deepcopy(self.paths))
 
     def dirty(self) -> None:
         self._bounds = None
@@ -210,9 +214,8 @@ class Drawing(object):
         lines = [line for line in splits.geoms if boundary.contains(line)]
         return Drawing([list(line.coords) for line in lines])
 
-    def add(self, drawing: Drawing) -> None:
-        self.paths.extend(drawing.paths)
-        self.dirty()
+    def add(self, drawing: Drawing) -> Drawing:
+        return Drawing(self.paths + drawing.paths)
 
     def transform(self, func) -> Drawing:
         return Drawing([[func(x, y) for x, y in path] for path in self.paths])
@@ -278,9 +281,16 @@ class Drawing(object):
         return self.scale_to_fit(width, float("inf"), padding)
 
     def scale_to_fit(self, width: float, height: float, padding: float = 0) -> Drawing:
+        if self.width == self.height == 0:
+            return self
         width -= padding * 2
         height -= padding * 2
-        scale = min(width / self.width, height / self.height)
+        if self.width == 0:
+            scale = height / self.height
+        elif self.height == 0:
+            scale = width / self.width
+        else:
+            scale = min(width / self.width, height / self.height)
         return self.scale(scale, scale).center(width, height)
 
     @staticmethod
@@ -289,6 +299,8 @@ class Drawing(object):
     ) -> list[Drawing]:
         combined = Drawing.combine(drawings)
         combined_scaled = combined.scale_to_fit(width, height, padding)
+        if combined.width == combined.height == 0:
+            return drawings
         scale_x = combined_scaled.width / combined.width
         scale_y = combined_scaled.height / combined.height
         combined_scaled_no_offset = combined.scale(scale_x, scale_y)

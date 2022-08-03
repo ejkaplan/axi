@@ -130,6 +130,8 @@ def join_paths(paths: list[Path], tolerance: float) -> list[Path]:
             else:
                 break
         out.append(path)
+    while len(line_index) > 0:
+        out.append(line_index.pop(0))
     return out
 
 
