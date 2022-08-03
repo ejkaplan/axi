@@ -15,11 +15,17 @@ class Index(object):
             self.insert(point)
 
     def normalize(self, x, y):
-        px = (x - self.x1) / (self.x2 - self.x1)
-        py = (y - self.y1) / (self.y2 - self.y1)
+        try:
+            px = (x - self.x1) / (self.x2 - self.x1)
+        except ZeroDivisionError:
+            px = 0
+        try:
+            py = (y - self.y1) / (self.y2 - self.y1)
+        except ZeroDivisionError:
+            py = 0
         i = int(px * self.n)
         j = int(py * self.n)
-        return (i, j)
+        return i, j
 
     def insert(self, point):
         x, y = point[:2]
