@@ -30,6 +30,7 @@ vid_pid = 04d8:fd92"""
 
 
 def find_port():
+    # TODO: More elegant axidraw selection
     config = load_config()
     vid_pid = config["DEFAULT"]["vid_pid"].upper()
     ports = [port for port in comports() if vid_pid in port[2]]
@@ -43,7 +44,9 @@ def find_port():
     else:
         print("Which axidraw to use?")
         for i, port in enumerate(ports):
-            print(f"{i}) {port[2]}")
+            n0 = port[2].index('SER=') + 4
+            n1 = port[2].index('LOCATION') - 1
+            print(f"{i}) {port[2][n0:n1]}")
         idx = int(input())
         return ports[idx][0]
 
