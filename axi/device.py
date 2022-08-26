@@ -29,7 +29,7 @@ jog_max_velocity = 8
 vid_pid = 04d8:fd92"""
 
 
-def axidraw_connected() -> bool:
+def available() -> bool:
     config = load_config()
     vid_pid = config["DEFAULT"]["vid_pid"].upper()
     ports = [port for port in comports() if vid_pid in port[2]]
