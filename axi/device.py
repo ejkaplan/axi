@@ -34,9 +34,6 @@ def find_port():
     config = load_config()
     vid_pid = config["DEFAULT"]["vid_pid"].upper()
     ports = [port for port in comports() if vid_pid in port[2]]
-    # for port in comports():
-    #     if vid_pid in port[2]:
-    #         return port[0]
     if len(ports) == 0:
         return None
     elif len(ports) == 1:
