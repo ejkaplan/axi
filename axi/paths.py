@@ -135,6 +135,26 @@ def join_paths(paths: list[Path], tolerance: float) -> list[Path]:
     return out
 
 
+def reloop_paths(
+    paths: list[Path], reverse: bool = False, rng: Optional[np.random.Generator] = None
+) -> list[Path]:
+    if rng is None:
+        rng = np.random.default_rng()
+    out = []
+    for path in paths:
+        if path[0] == path[-1]:
+            path = path[:-1]
+            split = rng.integers(0, len(path))
+            path = path[split:] + path[:split]
+            path.append(path[0])
+            if reverse and rng.choice([True, False]):
+                path = path[::-1]
+        else:
+            path = path.copy()
+        out.append(path)
+    return out
+
+
 def crop_interpolate(
     x1: float,
     y1: float,

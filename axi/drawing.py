@@ -5,6 +5,9 @@ from dataclasses import dataclass
 from math import sin, cos, radians, hypot
 from typing import Optional
 
+from matplotlib import pyplot as plt, patches
+from matplotlib.path import Path as PltPath
+
 from .paths import (
     simplify_paths,
     sort_paths,
@@ -14,12 +17,8 @@ from .paths import (
     paths_length,
     Path,
     Point,
+    reloop_paths,
 )
-
-try:
-    import cairocffi as cairo
-except ImportError:
-    cairo = None
 
 import numpy as np
 from shapely.geometry import MultiLineString, Polygon
@@ -204,6 +203,11 @@ class Drawing(object):
     def join_paths(self, tolerance: float) -> Drawing:
         return Drawing(join_paths(self.paths, tolerance))
 
+    def reloop_paths(
+        self, reverse: bool = False, rng: Optional[np.random.Generator] = None
+    ) -> Drawing:
+        return Drawing(reloop_paths(self.paths, reverse, rng))
+
     def crop_to_rectangle(self, x1: float, y1: float, x2: float, y2: float) -> Drawing:
         boundary = Polygon([(x1, y1), (x2, y1), (x2, y2), (x1, y2)])
         return self.crop_to_boundary(boundary)
@@ -359,105 +363,34 @@ class Drawing(object):
             paths.append(new_path)
         return Drawing(paths)
 
-    def render(
-        self,
-        scale: float = 109,
-        margin: float = 1,
-        line_width: float = 0.35 / 25.4,
-        bounds: Optional[tuple[float, float, float, float]] = None,
-        show_bounds: bool = True,
-    ) -> cairo.ImageSurface:
-        if cairo is None:
-            raise Exception("Drawing.render() requires cairo")
-        bounds = bounds or self.bounds
-        x1, y1, x2, y2 = bounds
-        w = x2 - x1
-        h = y2 - y1
-        margin *= scale
-        width = int(scale * w + margin * 2)
-        height = int(scale * h + margin * 2)
-        surface = cairo.ImageSurface(cairo.FORMAT_RGB24, width, height)
-        dc = cairo.Context(surface)
-        dc.set_line_cap(cairo.LINE_CAP_ROUND)
-        dc.set_line_join(cairo.LINE_JOIN_ROUND)
-        dc.translate(margin, margin)
-        dc.scale(scale, scale)
-        dc.translate(-x1, -y1)
-        dc.set_source_rgb(1, 1, 1)
-        dc.paint()
-        if show_bounds:
-            dc.set_source_rgb(0.5, 0.5, 0.5)
-            dc.set_line_width(1 / scale)
-            dc.rectangle(x1, y1, w, h)
-            dc.stroke()
-        dc.set_source_rgb(0, 0, 0)
-        dc.set_line_width(line_width)
-        for path in self.paths:
-            dc.move_to(*path[0])
-            for x, y in path:
-                dc.line_to(x, y)
-        dc.stroke()
-        return surface
-
     @staticmethod
-    def render_layers(
-        layers: list[Drawing],
-        scale: float = 109,
-        margin: float = 1,
-        line_width: float = 0.35 / 25.4,
-        bounds: Optional[tuple[float, float, float, float]] = None,
-        show_bounds: bool = True,
-    ) -> cairo.ImageSurface:
+    def render(layers: list[Drawing], width: float, height: float):
         colors = [
-            (
-                0.098,
-                0.098,
-                0.439,
-            ),  # midnight blue
-            (1.0, 0.0, 0.0),  # red
-            (1.0, 0.843, 0.0),  # gold
-            (0.0, 0.392, 0.0),  # dark green
-            (0.0, 1.0, 1.0),  # aqua
-            (1.0, 0.0, 1.0),  # fuchsia
-            (0.0, 1.0, 0.0),  # lime
-            (1.0, 0.714, 0.757),  # lightpink
+            "blue",
+            "red",
+            "orange",
+            "darkgreen",
+            "aqua",
+            "fuchsia",
+            "lime",
+            "hotpink",
         ]
-        if cairo is None:
-            raise Exception("Drawing.render() requires cairo")
-        if bounds is None:
-            bounds = [float("inf"), float("inf"), float("-inf"), float("-inf")]
-            for d in layers:
-                layer_bounds = d.bounds
-                bounds[0] = min(layer_bounds[0], bounds[0])
-                bounds[1] = min(layer_bounds[1], bounds[1])
-                bounds[2] = max(layer_bounds[2], bounds[2])
-                bounds[3] = max(layer_bounds[3], bounds[3])
-        x1, y1, x2, y2 = bounds
-        w = x2 - x1
-        h = y2 - y1
-        margin *= scale
-        width = int(scale * w + margin * 2)
-        height = int(scale * h + margin * 2)
-        surface = cairo.ImageSurface(cairo.FORMAT_RGB24, width, height)
-        dc = cairo.Context(surface)
-        dc.set_line_cap(cairo.LINE_CAP_ROUND)
-        dc.set_line_join(cairo.LINE_JOIN_ROUND)
-        dc.translate(margin, margin)
-        dc.scale(scale, scale)
-        dc.translate(-x1, -y1)
-        dc.set_source_rgb(1, 1, 1)
-        dc.paint()
-        if show_bounds:
-            dc.set_source_rgb(0.5, 0.5, 0.5)
-            dc.set_line_width(1 / scale)
-            dc.rectangle(x1, y1, w, h)
-            dc.stroke()
-        dc.set_line_width(line_width)
+        fig, ax = plt.subplots()
+        border = PltPath(
+            [(0, 0), (width, 0), (width, height), (0, height), (0, 0)],
+            [PltPath.MOVETO, PltPath.LINETO, PltPath.LINETO, PltPath.LINETO, PltPath.CLOSEPOLY],
+        )
+        ax.add_patch(patches.PathPatch(border, edgecolor='black', facecolor='white'))
         for i, layer in enumerate(layers):
-            dc.set_source_rgb(*colors[i])
             for path in layer.paths:
-                dc.move_to(*path[0])
-                for x, y in path:
-                    dc.line_to(x, y)
-            dc.stroke()
-        return surface
+                codes = [PltPath.MOVETO] + ([PltPath.LINETO] * (len(path) - 1))
+                coords = [(x, height - y) for x, y in path]
+                plt_path = PltPath(coords, codes)
+                ax.add_patch(
+                    patches.PathPatch(plt_path, edgecolor=colors[i], fill=False)
+                )
+
+        plt.xlim([-0.5, width + 0.5])
+        plt.ylim([-0.5, height + 0.5])
+        ax.axis("equal")
+        plt.show()
