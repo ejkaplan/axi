@@ -13,7 +13,7 @@ def reset():
 def draw(
     drawing: Drawing, progress: bool = True, device: Optional[Device] = None
 ) -> Device:
-    device = Device() if device is None else Device
+    device = Device() if device is None else device
     device.enable_motors()
     device.run_drawing(drawing, progress)
     device.disable_motors()
