@@ -49,10 +49,13 @@ def batch_drawings(drawings: list[Drawing], width: float, height: float,
 
 def render_gl(drawings: list[Drawing], width: float, height: float, dpi=128):
     batch = batch_drawings(drawings, width, height, dpi)
-    win = window.Window(int(width * dpi), int(height * dpi), "plot preview")
+    config = gl.Config(sample_buffers=1, samples=8, double_buffer=True)
+    win = window.Window(int(width * dpi), int(height * dpi), "plot preview",
+                        config=config)
 
     @win.event
     def on_draw():
+        gl.glEnable(gl.GL_LINE_SMOOTH)
         win.clear()
         batch.draw()
 
