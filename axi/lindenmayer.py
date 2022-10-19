@@ -5,7 +5,7 @@ from math import sin, cos, radians
 from .drawing import Drawing
 
 
-class LSystem(object):
+class LSystem:
     def __init__(self, rules: dict[str, str]):
         self.rules = rules
         self.pattern = re.compile("|".join("(%s)" % x for x in rules))
