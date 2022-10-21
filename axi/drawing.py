@@ -8,7 +8,8 @@ from typing import Optional
 import matplotlib
 import numpy as np
 from shapely.affinity import rotate
-from shapely.geometry import MultiLineString, Polygon, Point
+from shapely.geometry import MultiLineString, Polygon, Point, LineString, MultiPolygon, \
+    GeometryCollection
 from shapely.ops import split
 
 from .paths import (
@@ -121,8 +122,20 @@ class Drawing(object):
         return MultiLineString(self.paths)
 
     @staticmethod
-    def from_shapely(shape: MultiLineString) -> Drawing:
-        return Drawing([list(line.coords) for line in shape.geoms])
+    def from_shapely(shape) -> Drawing:
+        if isinstance(shape, LineString):
+            return Drawing([list(shape.coords)])
+        elif isinstance(shape, Polygon):
+            return Drawing(
+                [list(shape.exterior.coords)] + [list(hole.coords) for hole in
+                                                 shape.interiors])
+        elif isinstance(shape, MultiLineString | MultiPolygon | GeometryCollection):
+            out = Drawing()
+            for elem in shape.geoms:
+                out = out.add(Drawing.from_shapely(elem))
+            return out
+        else:
+            return Drawing()
 
     @property
     def points(self) -> list[Point]:
@@ -367,21 +380,13 @@ class Drawing(object):
         return Drawing(paths)
 
     @staticmethod
-    def shade(polygon: Polygon, angle: float, spacing: float, res: float) -> Drawing:
-        paths: list[Path] = []
+    def shade(polygon: Polygon, angle: float, spacing: float) -> Drawing:
+        out = Drawing()
         centroid = polygon.centroid
         polygon = rotate(polygon, -angle, use_radians=True, origin=centroid)
         x0, y0, x1, y1 = polygon.bounds
         for y in np.arange(y0, y1, spacing):
-            path: list[tuple[float, float]] = []
-            for x in np.arange(x0, x1, res):
-                if polygon.contains(Point(x, y)):
-                    path.append((x, y))
-                else:
-                    if len(path) > 1:
-                        paths.append(path)
-                    path = []
-            if len(path) > 1:
-                paths.append(path)
-        out = Drawing(paths).rotate(angle, anchor=centroid.coords[:][0])
-        return out
+            line = LineString([(x0, y), (x1, y)])
+            intersection = polygon.intersection(line)
+            out = out.add(Drawing.from_shapely(intersection))
+        return out.rotate(angle, anchor=centroid.coords[:][0])

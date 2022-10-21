@@ -68,8 +68,8 @@ def main():
     shapes: GeometryCollection = load_svg("C:\\Users\\eliotkaplan\\Desktop\\drawing.svg")
     shapes = shapely_scale_to_fit(shapes, 7, 7)
     shape = shapes.geoms[0]
-    a = Drawing.shade(shape, np.pi/4, 0.1, 0.01)
-    b = Drawing.shade(shape, 3*np.pi/4, 0.1, 0.01)
+    a = Drawing.shade(shape, np.pi/4, 0.1)
+    b = Drawing.shade(shape, 3*np.pi/4, 0.1)
     d = a.add(b).center(8, 8)
     render_gl([d], 8, 8, dpi=100)
 
