@@ -5,11 +5,11 @@ import numpy as np
 from axi import Drawing
 
 from axi.paths import Point, Path
-from shapely.geometry import MultiLineString, LineString
+from shapely.geometry import MultiLineString, LineString, GeometryCollection, Polygon
 from svg.path import parse_path, Line, CubicBezier, Close
-from bezier.curve import Curve
 
 from axi.renderer import render_gl
+from axi.util import shapely_scale_to_fit
 
 
 def complex_tuple(n: complex) -> Point:
@@ -20,37 +20,57 @@ def svg_line_parse(line: Union[Line, Close]) -> Path:
     return [complex_tuple(line.start), complex_tuple(line.end)]
 
 
+def bezier_eval(nodes: np.ndarray, t: np.ndarray) -> np.ndarray:
+    return (1 - t) ** 3 * nodes[:, [0]] + 3 * (1 - t) ** 2 * t * nodes[:, [1]] + 3 * (
+                1 - t) * t ** 2 * nodes[:, [2]] + t ** 3 * nodes[:, [3]]
+
+
 def svg_cubic_bezier_parse(bezier: CubicBezier, n: int = 128) -> Path:
-    nodes = [complex_tuple(p) for p in (bezier.start, bezier.control1, bezier.control2, bezier.end)]
-    nodes = np.array(nodes).T
-    curve = Curve.from_nodes(nodes)
-    points = curve.evaluate_multi(np.linspace(0, 1, n, endpoint=True))
-    return [tuple(row) for row in points.T]
+    nodes = [complex_tuple(p) for p in
+             (bezier.start, bezier.control1, bezier.control2, bezier.end)]
+    points = bezier_eval(np.array(nodes).T, np.linspace(0, 1, n))
+    return [tuple(p) for p in points.T]
 
 
-def load_svg(path: str) -> MultiLineString:
+def load_svg(path: str) -> GeometryCollection:
     with open(path) as f:
         doc = minidom.parse(f)
-    paths = [parse_path(path.getAttribute('d')) for path in doc.getElementsByTagName('path')]
+    paths = [parse_path(path.getAttribute('d')) for path in
+             doc.getElementsByTagName('path')]
     doc.unlink()
-    line_strings: list[LineString] = []
+    shapes: list[LineString | Polygon] = []
     for path in paths:
+        polygon = False
         path_points: Path = []
+        edge: Path = []
+        holes: list[Path] = []
         for elem in path:
-            print(elem)
-            if isinstance(elem, Line) or isinstance(elem, Close):
+            if isinstance(elem, Line):
                 path_points.extend(svg_line_parse(elem))
             elif isinstance(elem, CubicBezier):
                 path_points.extend(svg_cubic_bezier_parse(elem))
-        path_points = [path_points[i] for i in range(len(path_points) - 1) if path_points[i] != path_points[i + 1]] + \
-                      [path_points[-1]]
-        line_strings.append(LineString(path_points))
-    return MultiLineString(line_strings)
+            elif isinstance(elem, Close):
+                polygon = True
+                path_points.extend(svg_line_parse(elem))
+                if edge:
+                    holes.append(path_points)
+                else:
+                    edge = path_points
+                path_points = []
+        if polygon:
+            shapes.append(Polygon(edge, holes))
+        else:
+            shapes.append(LineString(path_points))
+    return GeometryCollection(shapes)
 
 
 def main():
-    shape = load_svg("C:\\Users\\eliot\\Desktop\\drawing.svg")
-    d = Drawing.from_shapely(shape).scale_to_fit(8, 8, 0.5).center(8, 8)
+    shapes: GeometryCollection = load_svg("C:\\Users\\eliotkaplan\\Desktop\\drawing.svg")
+    shapes = shapely_scale_to_fit(shapes, 7, 7)
+    shape = shapes.geoms[0]
+    a = Drawing.shade(shape, np.pi/4, 0.1, 0.01)
+    b = Drawing.shade(shape, 3*np.pi/4, 0.1, 0.01)
+    d = a.add(b).center(8, 8)
     render_gl([d], 8, 8, dpi=100)
 
 

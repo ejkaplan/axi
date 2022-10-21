@@ -7,7 +7,8 @@ from typing import Optional
 
 import matplotlib
 import numpy as np
-from shapely.geometry import MultiLineString, Polygon
+from shapely.affinity import rotate
+from shapely.geometry import MultiLineString, Polygon, Point
 from shapely.ops import split
 
 from .paths import (
@@ -18,7 +19,6 @@ from .paths import (
     expand_quadratics,
     paths_length,
     Path,
-    Point,
     reloop_paths,
 )
 
@@ -365,3 +365,23 @@ class Drawing(object):
                 new_path += tmp[1:]
             paths.append(new_path)
         return Drawing(paths)
+
+    @staticmethod
+    def shade(polygon: Polygon, angle: float, spacing: float, res: float) -> Drawing:
+        paths: list[Path] = []
+        centroid = polygon.centroid
+        polygon = rotate(polygon, -angle, use_radians=True, origin=centroid)
+        x0, y0, x1, y1 = polygon.bounds
+        for y in np.arange(y0, y1, spacing):
+            path: list[tuple[float, float]] = []
+            for x in np.arange(x0, x1, res):
+                if polygon.contains(Point(x, y)):
+                    path.append((x, y))
+                else:
+                    if len(path) > 1:
+                        paths.append(path)
+                    path = []
+            if len(path) > 1:
+                paths.append(path)
+        out = Drawing(paths).rotate(angle, anchor=centroid.coords[:][0])
+        return out
