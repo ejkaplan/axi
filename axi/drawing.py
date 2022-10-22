@@ -385,7 +385,7 @@ class Drawing(object):
         centroid = polygon.centroid
         polygon = rotate(polygon, -angle, use_radians=True, origin=centroid)
         x0, y0, x1, y1 = polygon.bounds
-        for y in np.arange(y0, y1, spacing):
+        for y in np.arange(y0 + 0.5 * spacing, y1, spacing):
             line = LineString([(x0, y), (x1, y)])
             intersection = polygon.intersection(line)
             out = out.add(Drawing.from_shapely(intersection))
