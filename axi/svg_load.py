@@ -2,14 +2,10 @@ from typing import Union
 from xml.dom import minidom
 
 import numpy as np
-from axi import Drawing
-
-from axi.paths import Point, Path
-from shapely.geometry import MultiLineString, LineString, GeometryCollection, Polygon
+from shapely.geometry import LineString, GeometryCollection, Polygon
 from svg.path import parse_path, Line, CubicBezier, Close
 
-from axi.renderer import render_gl
-from axi.util import shapely_scale_to_fit
+from axi.paths import Point, Path
 
 
 def complex_tuple(n: complex) -> Point:
@@ -22,7 +18,7 @@ def svg_line_parse(line: Union[Line, Close]) -> Path:
 
 def bezier_eval(nodes: np.ndarray, t: np.ndarray) -> np.ndarray:
     return (1 - t) ** 3 * nodes[:, [0]] + 3 * (1 - t) ** 2 * t * nodes[:, [1]] + 3 * (
-                1 - t) * t ** 2 * nodes[:, [2]] + t ** 3 * nodes[:, [3]]
+            1 - t) * t ** 2 * nodes[:, [2]] + t ** 3 * nodes[:, [3]]
 
 
 def svg_cubic_bezier_parse(bezier: CubicBezier, n: int = 128) -> Path:
@@ -62,17 +58,3 @@ def load_svg(path: str) -> GeometryCollection:
         else:
             shapes.append(LineString(path_points))
     return GeometryCollection(shapes)
-
-
-def main():
-    shapes: GeometryCollection = load_svg("C:\\Users\\eliotkaplan\\Desktop\\drawing.svg")
-    shapes = shapely_scale_to_fit(shapes, 7, 7)
-    shape = shapes.geoms[0]
-    a = Drawing.shade(shape, np.pi/4, 0.1)
-    b = Drawing.shade(shape, 3*np.pi/4, 0.1)
-    d = a.add(b).center(8, 8)
-    render_gl([d], 8, 8, dpi=100)
-
-
-if __name__ == '__main__':
-    main()
