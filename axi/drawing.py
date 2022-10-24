@@ -8,6 +8,7 @@ from typing import Optional
 import matplotlib
 import numpy as np
 from shapely.affinity import rotate
+from shapely.errors import TopologicalError
 from shapely.geometry import MultiLineString, Polygon, Point, LineString, MultiPolygon, \
     GeometryCollection
 from shapely.ops import split
@@ -225,10 +226,16 @@ class Drawing(object):
         boundary = Polygon([(x1, y1), (x2, y1), (x2, y2), (x1, y2)])
         return self.crop_to_boundary(boundary)
 
-    def crop_to_boundary(self, boundary: Polygon) -> Drawing:
+    def crop_to_boundary(self, boundary: Polygon | MultiPolygon) -> Drawing:
         multiline = self.to_shapely()
         splits = split(multiline, boundary)
-        lines = [line for line in splits.geoms if boundary.contains(line)]
+        lines = []
+        for line in splits.geoms:
+            try:
+                if len(line.coords) >= 2 and boundary.contains(line):
+                    lines.append(line)
+            except TopologicalError:
+                pass
         return Drawing([list(line.coords) for line in lines])
 
     def add(self, drawing: Drawing) -> Drawing:
