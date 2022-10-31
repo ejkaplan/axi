@@ -3,7 +3,7 @@ from xml.dom import minidom
 
 import numpy as np
 from shapely.geometry import LineString, GeometryCollection, Polygon
-from svg.path import parse_path, Line, CubicBezier, Close
+from svg.path import parse_path, Line, CubicBezier, Close, QuadraticBezier
 
 from axi.paths import Point, Path
 
@@ -16,15 +16,26 @@ def svg_line_parse(line: Union[Line, Close]) -> Path:
     return [complex_tuple(line.start), complex_tuple(line.end)]
 
 
-def bezier_eval(nodes: np.ndarray, t: np.ndarray) -> np.ndarray:
+def cubic_bezier_eval(nodes: np.ndarray, t: np.ndarray) -> np.ndarray:
     return (1 - t) ** 3 * nodes[:, [0]] + 3 * (1 - t) ** 2 * t * nodes[:, [1]] + 3 * (
             1 - t) * t ** 2 * nodes[:, [2]] + t ** 3 * nodes[:, [3]]
+
+
+def quadratic_bezier_eval(nodes: np.ndarray, t: np.ndarray) -> np.ndarray:
+    return (1 - t) ** 2 * nodes[:, [0]] + 2 * (1 - t) * t * nodes[:, [1]] + t ** 2 * nodes[:, [2]]
 
 
 def svg_cubic_bezier_parse(bezier: CubicBezier, n: int = 128) -> Path:
     nodes = [complex_tuple(p) for p in
              (bezier.start, bezier.control1, bezier.control2, bezier.end)]
-    points = bezier_eval(np.array(nodes).T, np.linspace(0, 1, n))
+    points = cubic_bezier_eval(np.array(nodes).T, np.linspace(0, 1, n))
+    return [tuple(p) for p in points.T]
+
+
+def svg_quadratic_bezier_parse(bezier: QuadraticBezier, n: int = 128) -> Path:
+    nodes = [complex_tuple(p) for p in
+             (bezier.start, bezier.control, bezier.end)]
+    points = quadratic_bezier_eval(np.array(nodes).T, np.linspace(0, 1, n))
     return [tuple(p) for p in points.T]
 
 
@@ -45,6 +56,8 @@ def load_svg(path: str) -> GeometryCollection:
                 path_points.extend(svg_line_parse(elem))
             elif isinstance(elem, CubicBezier):
                 path_points.extend(svg_cubic_bezier_parse(elem))
+            elif isinstance(elem, QuadraticBezier):
+                path_points.extend(svg_quadratic_bezier_parse(elem))
             elif isinstance(elem, Close):
                 polygon = True
                 path_points.extend(svg_line_parse(elem))
