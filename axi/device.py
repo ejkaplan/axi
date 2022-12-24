@@ -181,7 +181,7 @@ class Device(object):
     def read_position(self):
         response = self.command("QS")
         self.readline()
-        a, b = map(int, response.split(","))
+        a, b = map(float, response.split(","))
         a /= self.steps_per_unit
         b /= self.steps_per_unit
         y = (a - b) / 2
