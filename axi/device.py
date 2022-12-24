@@ -76,7 +76,7 @@ class Device(object):
         self.steps_per_mm = 80 / self.step_divider
         self.pen_up_position = float(config["DEFAULT"]["pen_up_position"])
         self.pen_up_speed = float(config["DEFAULT"]["pen_up_speed"])
-        self.pen_up_delay = int(config["DEFAULT"]["pen_up_delay"])
+        self.pen_up_delay = float(config["DEFAULT"]["pen_up_delay"])
         self.pen_down_position = float(config["DEFAULT"]["pen_down_position"])
         self.pen_down_speed = float(config["DEFAULT"]["pen_down_speed"])
         self.pen_down_delay = int(config["DEFAULT"]["pen_down_delay"])
