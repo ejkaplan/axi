@@ -2,9 +2,8 @@ from math import hypot
 from typing import Optional
 
 import numpy as np
-from pyhull.convex_hull import ConvexHull
 from scipy.spatial import KDTree
-from shapely import geometry
+from shapely import geometry, MultiPoint
 
 from .spatial import Index
 
@@ -214,9 +213,8 @@ def crop_paths(
 
 
 def convex_hull(points: list[Point]) -> list[Point]:
-    hull = ConvexHull(points)
-    vertices = set(i for v in hull.vertices for i in v)
-    return [hull.points[i] for i in vertices]
+    hull = MultiPoint(points).convex_hull
+    return hull.exterior.coords
 
 
 def quadratic_path(
