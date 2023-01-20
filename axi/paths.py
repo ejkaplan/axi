@@ -214,7 +214,11 @@ def crop_paths(
 
 def convex_hull(points: list[Point]) -> list[Point]:
     hull = MultiPoint(points).convex_hull
-    return hull.exterior.coords
+    if isinstance(hull, geometry.Point) or isinstance(hull, geometry.LineString):
+        return list(hull.coords)
+    elif isinstance(hull, geometry.Polygon):
+        return list(hull.exterior.coords)
+    raise ValueError()
 
 
 def quadratic_path(

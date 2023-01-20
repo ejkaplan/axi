@@ -3,7 +3,7 @@ from __future__ import division, annotations
 from copy import deepcopy
 from dataclasses import dataclass
 from math import sin, cos, radians, hypot
-from typing import Optional
+from typing import Optional, List, Tuple
 
 import matplotlib
 import numpy as np
@@ -36,7 +36,7 @@ A3_BOUNDS = (0, 0, 16.93, 11.69)
 @dataclass
 class Drawing(object):
     def __init__(self, paths: Optional[list[Path]] = None):
-        self.paths = paths or []
+        self.paths: list[Path] = paths or []
         self._bounds = None
         self._length = None
         self._down_length = None
@@ -139,7 +139,7 @@ class Drawing(object):
             return Drawing()
 
     @property
-    def points(self) -> list[Point]:
+    def points(self) -> list[tuple[float, float]]:
         return [(x, y) for path in self.paths for x, y in path]
 
     @property
