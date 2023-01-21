@@ -9,26 +9,15 @@ from pyglet.graphics import Batch, Group
 
 from axi import Drawing
 
-# colors = [
-#     "blue",
-#     "red",
-#     "darkgreen",
-#     "orange",
-#     "aqua",
-#     "fuchsia",
-#     "lime",
-#     "hotpink",
-# ]
-
 colors = [
-    (0, 0, 255, 255),
-    (255, 0, 0, 255),
-    (0, 82, 33, 255),
-    (255, 123, 0, 255),
-    (8, 142, 149, 255),
-    (255, 0, 255, 255),
-    (158, 253, 56, 255),
-    (206, 81, 113, 255),
+    (0, 0, 255, 255),  # blue
+    (255, 0, 0, 255),  # red
+    (0, 82, 33, 255),  # dark green
+    (255, 123, 0, 255),  # orange
+    (8, 142, 149, 255),  # aqua
+    (255, 0, 255, 255),  # fuchsia
+    (158, 253, 56, 255),  # lime
+    (206, 81, 113, 255),  # hot pink
 ]
 
 

@@ -3,14 +3,12 @@ from __future__ import division, annotations
 from copy import deepcopy
 from dataclasses import dataclass
 from math import sin, cos, radians, hypot
-from typing import Optional, List, Tuple
+from typing import Optional
 
-import matplotlib
 import numpy as np
 from shapely.affinity import rotate
 from shapely.errors import TopologicalError
-from shapely.geometry import MultiLineString, Polygon, Point, LineString, MultiPolygon, \
-    GeometryCollection
+from shapely import geometry
 from shapely.ops import split
 
 from .paths import (
@@ -23,8 +21,6 @@ from .paths import (
     Path,
     reloop_paths,
 )
-
-matplotlib.use("TkAgg")
 
 V3_SIZE = (12, 8.5)
 V3_BOUNDS = (0, 0, 12, 8.5)
@@ -119,18 +115,18 @@ class Drawing(object):
         with open(filename, "w") as fp:
             fp.write(self.dumps_svg())
 
-    def to_shapely(self) -> MultiLineString:
-        return MultiLineString(self.paths)
+    def to_shapely(self) -> geometry.MultiLineString:
+        return geometry.MultiLineString(self.paths)
 
     @staticmethod
     def from_shapely(shape) -> Drawing:
-        if isinstance(shape, LineString):
+        if isinstance(shape, geometry.LineString):
             return Drawing([list(shape.coords)])
-        elif isinstance(shape, Polygon):
+        elif isinstance(shape, geometry.Polygon):
             return Drawing(
                 [list(shape.exterior.coords)] + [list(hole.coords) for hole in
                                                  shape.interiors])
-        elif isinstance(shape, MultiLineString | MultiPolygon | GeometryCollection):
+        elif isinstance(shape, geometry.MultiLineString | geometry.MultiPolygon | geometry.GeometryCollection):
             out = Drawing()
             for elem in shape.geoms:
                 out = out.add(Drawing.from_shapely(elem))
@@ -223,10 +219,10 @@ class Drawing(object):
         return Drawing(reloop_paths(self.paths, reverse, rng))
 
     def crop_to_rectangle(self, x1: float, y1: float, x2: float, y2: float) -> Drawing:
-        boundary = Polygon([(x1, y1), (x2, y1), (x2, y2), (x1, y2)])
+        boundary = geometry.Polygon([(x1, y1), (x2, y1), (x2, y2), (x1, y2)])
         return self.crop_to_boundary(boundary)
 
-    def crop_to_boundary(self, boundary: Polygon | MultiPolygon) -> Drawing:
+    def crop_to_boundary(self, boundary: geometry.Polygon | geometry.MultiPolygon) -> Drawing:
         multiline = self.to_shapely()
         splits = split(multiline, boundary)
         lines = []
@@ -387,13 +383,13 @@ class Drawing(object):
         return Drawing(paths)
 
     @staticmethod
-    def shade(polygon: Polygon, angle: float, spacing: float) -> Drawing:
+    def shade(polygon: geometry.Polygon, angle: float, spacing: float) -> Drawing:
         out = Drawing()
         centroid = polygon.centroid
         polygon = rotate(polygon, -angle, use_radians=True, origin=centroid)
         x0, y0, x1, y1 = polygon.bounds
         for y in np.arange(y0 + 0.5 * spacing, y1, spacing):
-            line = LineString([(x0, y), (x1, y)])
+            line = geometry.LineString([(x0, y), (x1, y)])
             intersection = polygon.intersection(line)
             out = out.add(Drawing.from_shapely(intersection))
         return out.rotate(angle, anchor=centroid.coords[:][0])

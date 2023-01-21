@@ -7,10 +7,11 @@ from math import modf
 
 from serial import Serial
 from serial.tools.list_ports import comports
+from tqdm import tqdm
 
+from . import Drawing
 from .paths import path_length
-from .planner import Planner
-from .progress import Bar
+from .planner import Planner, Plan
 
 DEFAULT_CONFIGS = """[DEFAULT]
 timeslice_ms = 10
@@ -131,7 +132,7 @@ class Device(object):
     def close(self):
         self.serial.close()
 
-    def make_planner(self, jog=False):
+    def make_planner(self, jog: bool = False):
         a = self.acceleration
         vmax = self.max_velocity
         cf = self.corner_factor
@@ -149,10 +150,10 @@ class Device(object):
         return self.readline()
 
     # higher level functions
-    def move(self, dx, dy):
+    def move(self, dx: float, dy: float):
         self.run_path([(0, 0), (dx, dy)])
 
-    def goto(self, x, y, jog=True):
+    def goto(self, x: float, y: float, jog=True):
         # TODO: jog if pen up
         px, py = self.read_position()
         self.run_path([(px, py), (x, y)], jog)
@@ -188,14 +189,14 @@ class Device(object):
         x = y + b
         return x, y
 
-    def stepper_move(self, duration, a, b):
+    def stepper_move(self, duration: float, a, b):
         return self.command("XM", duration, a, b)
 
     def wait(self):
         while "1" in self.motor_status():
             time.sleep(0.01)
 
-    def run_plan(self, plan):
+    def run_plan(self, plan: Plan):
         step_s = self.timeslice_ms / 1000
         t = 0
         while t < plan.t:
@@ -210,12 +211,12 @@ class Device(object):
             t += step_s
         # self.wait()
 
-    def run_path(self, path, jog=False):
+    def run_path(self, path: list[tuple[float, float]], jog: bool = False):
         planner = self.make_planner(jog)
         plan = planner.plan(path)
         self.run_plan(plan)
 
-    def run_drawing(self, drawing, progress=True):
+    def run_drawing(self, drawing: Drawing):
         print("number of paths : %d" % len(drawing.paths))
         print("pen down length : %g" % drawing.down_length)
         print("pen up length   : %g" % drawing.up_length)
@@ -223,20 +224,20 @@ class Device(object):
         print("drawing bounds  : %s" % str(drawing.bounds))
         self.pen_up()
         position = (0, 0)
-        bar = Bar(drawing.length, enabled=progress)
+        bar = tqdm(total=drawing.length)
         for path in drawing.paths:
             jog = [position, path[0]]
             self.run_path(jog, jog=True)
-            bar.increment(path_length(jog))
+            bar.update(path_length(jog))
             self.pen_down()
             self.run_path(path)
             self.pen_up()
             position = path[-1]
-            bar.increment(path_length(path))
-        bar.done()
+            bar.update(path_length(path))
+        bar.close()
         self.run_path([position, (0, 0)], jog=True)
 
-    def plan_drawing(self, drawing):
+    def plan_drawing(self, drawing: Drawing):
         result = []
         planner = self.make_planner()
         for path in drawing.all_paths:

@@ -4,8 +4,8 @@ from shapely import geometry
 from axi import Drawing
 
 coords = st.tuples(
-    st.floats(min_value=0, max_value=16.93, allow_nan=False, allow_subnormal=False, allow_infinity=False),
-    st.floats(min_value=0, max_value=16.93, allow_nan=False, allow_subnormal=False, allow_infinity=False))
+    st.floats(min_value=0, max_value=20, allow_nan=False, allow_subnormal=False, allow_infinity=False),
+    st.floats(min_value=0, max_value=20, allow_nan=False, allow_subnormal=False, allow_infinity=False))
 paths = st.lists(coords, min_size=2)
 drawings = st.builds(Drawing, st.lists(paths, min_size=1))
 
@@ -36,3 +36,10 @@ def test_convex_hull(d: Drawing):
         assert point in d.points
     bounds = geometry.MultiPoint(hull).bounds
     assert d.bounds == bounds
+
+
+@given(d=drawings)
+def test_bounds(d: Drawing):
+    x0, y0, x1, y1 = d.bounds
+    assert 0 <= x0 <= x1 <= 20
+    assert 0 <= y0 <= y1 <= 20

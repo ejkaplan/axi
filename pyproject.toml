@@ -16,6 +16,7 @@ matplotlib = "^3.6.3"
 pyglet = ">=1.5.27,<1.6.0"
 pyserial = "^3.5"
 hypothesis = "^6.62.1"
+tqdm = "^4.64.1"
 
 
 [build-system]
