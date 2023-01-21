@@ -218,7 +218,7 @@ class Device(object):
         plan = planner.plan(path)
         self.run_plan(plan)
 
-    def run_drawing(self, drawing: Drawing):
+    def run_drawing(self, drawing: "Drawing"):
         print("number of paths : %d" % len(drawing.paths))
         print("pen down length : %g" % drawing.down_length)
         print("pen up length   : %g" % drawing.up_length)
@@ -239,7 +239,7 @@ class Device(object):
         bar.close()
         self.run_path([position, (0, 0)], jog=True)
 
-    def plan_drawing(self, drawing: Drawing):
+    def plan_drawing(self, drawing: "Drawing"):
         result = []
         planner = self.make_planner()
         for path in drawing.all_paths:
