@@ -4,12 +4,14 @@ import os
 import time
 from configparser import ConfigParser
 from math import modf
+from typing import TYPE_CHECKING
 
 from serial import Serial
 from serial.tools.list_ports import comports
 from tqdm import tqdm
 
-from . import Drawing
+if TYPE_CHECKING:
+    from . import Drawing
 from .paths import path_length
 from .planner import Planner, Plan
 
