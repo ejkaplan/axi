@@ -1,8 +1,8 @@
 [tool.poetry]
 name = "axi"
-version = "0.1.0"
+version = "0.1.1"
 description = ""
-authors = ["Your Name <you@example.com>"]
+authors = ["El Kaplan <kaplan.el.j@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
