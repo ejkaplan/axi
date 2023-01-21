@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "axi"
-version = "0.1.1"
+version = "0.1.2"
 description = ""
 authors = ["El Kaplan <kaplan.el.j@gmail.com>"]
 readme = "README.md"
