@@ -15,22 +15,22 @@ def reset():
 
 
 def draw(
-        drawing: Drawing, progress: bool = True, device: Optional[Device] = None
+        drawing: Drawing, device: Optional[Device] = None
 ) -> Device:
     device = Device() if device is None else device
     device.enable_motors()
-    device.run_drawing(drawing, progress)
+    device.run_drawing(drawing)
     device.disable_motors()
     return device
 
 
 def draw_layers(
-        layers: list[Drawing], progress: bool = True, device: Optional[Device] = None
+        layers: list[Drawing], device: Optional[Device] = None
 ):
     device = Device() if device is None else Device
     for i, layer in enumerate(layers):
         input(f"Press enter when you're ready to draw layer {i}.")
-        draw(layer, progress, device=device)
+        draw(layer, device=device)
 
 
 Geometry = LineString | Polygon | MultiLineString | MultiPolygon | GeometryCollection
